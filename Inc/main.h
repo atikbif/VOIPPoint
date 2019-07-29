@@ -64,8 +64,12 @@ void Error_Handler(void);
 #define MUTE_GPIO_Port GPIOC
 #define FAULTZ_Pin GPIO_PIN_15
 #define FAULTZ_GPIO_Port GPIOC
+#define CAN1_EN_Pin GPIO_PIN_8
+#define CAN1_EN_GPIO_Port GPIOA
 #define LED_Pin GPIO_PIN_12
 #define LED_GPIO_Port GPIOC
+#define CAN2_EN_Pin GPIO_PIN_4
+#define CAN2_EN_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

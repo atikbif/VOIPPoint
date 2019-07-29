@@ -92,7 +92,7 @@ static uint8_t               RxData[8];
 static uint8_t				 can_frame[40];
 static uint8_t				 can_frame_id[256][40];
 uint16_t can_tmr = 0;
-unsigned short device_id = 0x01;
+unsigned short device_id = 0x02;
 unsigned short gate_id = 0xFE;
 unsigned short point_to_point_tmr = 0x00;
 unsigned char to_id = 0xFF;
@@ -100,6 +100,8 @@ uint8_t can_pckt_length = 0;
 uint16_t p_cnt = 0;
 
 unsigned char encoded_micr_ready_buf_num = 0;
+
+uint32_t wav_offset = 0;
 
 /* USER CODE END PV */
 
@@ -178,8 +180,59 @@ static void can_work() {
 	  }
 	  encoded_micr_ready_buf_num=0;
   }
-  if(point_to_point_tmr) point_to_point_tmr--;
-  else to_id = 0xFF; // send data to all
+  //if(point_to_point_tmr) point_to_point_tmr--;
+  //else to_id = 0xFF; // send data to all
+}
+
+static void encode_work() {
+	uint16_t i = 0;
+	static int16_t tmp_frame[FRAME_SIZE];
+	if(DmaMicrophoneBuffCplt) {
+	  for(i=0;i<FRAME_SIZE;i++) {
+		  tmp_frame[i] = wav_ex[wav_offset]+0x8000;
+		  wav_offset++;
+		  if(wav_offset>=sizeof(wav_ex)/2) wav_offset = 0;
+	  }
+	  //HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET);
+	  encoded_length = opus_encode(enc, (opus_int16*)tmp_frame, FRAME_SIZE,(unsigned char*) &microphone_encoded_data[1][0], 256);
+	  if(encoded_length>0) {
+		  //if(encoded_length>30) HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
+		  encoded_micr_ready_buf_num = 2;
+	  }
+	  //HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET);
+	  DmaMicrophoneBuffCplt = 0;
+	}else if(DmaMicrophoneHalfBuffCplt) {
+	  for(i=0;i<FRAME_SIZE;i++) {
+		  tmp_frame[i] = wav_ex[wav_offset]+0x8000;
+		  wav_offset++;
+		  if(wav_offset>=sizeof(wav_ex)/2) wav_offset = 0;
+	  }
+	  //HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET);
+	  encoded_length = opus_encode(enc, (opus_int16*)tmp_frame, FRAME_SIZE,(unsigned char*) &microphone_encoded_data[0][0], 256);
+	  if(encoded_length>0) {
+		  encoded_micr_ready_buf_num = 1;
+	  }
+	  //HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET);
+	  DmaMicrophoneHalfBuffCplt = 0;
+	}
+}
+
+static void decode_work() {
+	static uint8_t can_buf[40];
+	int res = 0;
+	unsigned short can_length = 0;
+	can_length = get_can_frame(can_buf);
+	if(can_length) {
+		can_tmr = 0;
+		res = opus_decode(dec,(unsigned char*)&can_buf[0],can_length,&audio_stream[0],1024,0);
+		if(res!=FRAME_SIZE) {
+			add_empty_audio_frame();
+		}else {
+			add_audio_frame(audio_stream,FRAME_SIZE);
+		}
+	}
+	// no audio stream
+	if(can_tmr>=30) {add_empty_audio_frame();can_tmr = 0;/*HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET);*/}
 }
 
 static void convert(uint8_t num) {
@@ -221,10 +274,6 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
-  static int16_t tmp_frame[FRAME_SIZE];
-  uint32_t wav_offset = 0;
-  uint16_t i = 0;
-
   /* USER CODE END 1 */
   
 
@@ -257,13 +306,6 @@ int main(void)
 
   FIR_Init();
 
-  init_can_frames();
-  initCANFilter();
-  HAL_CAN_Start(&hcan1);
-  if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK) {
-  	Error_Handler();
-  }
-
   enc = opus_encoder_create(8000, 1, OPUS_APPLICATION_AUDIO , &error);
   opus_encoder_ctl(enc, OPUS_SET_COMPLEXITY(1));
   opus_encoder_ctl(enc, OPUS_SET_BITRATE(8000));
@@ -271,6 +313,15 @@ int main(void)
 
   HAL_TIM_Base_Start(&htim6);
   HAL_DFSDM_FilterRegularStart_DMA(&hdfsdm1_filter0, (int32_t*)&RecBuf[0][0], 160*2);
+
+  init_can_frames();
+	init_audio_frames();
+	initCANFilter();
+	HAL_CAN_Start(&hcan1);
+	if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK) {
+		Error_Handler();
+	}
+
   HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1,(uint32_t*)conv,FRAME_SIZE*6*2,DAC_ALIGN_12B_L);
 
 
@@ -289,41 +340,8 @@ int main(void)
 		  DmaDacHalfBuffCplt=0;
 	  }
 
-	  if(DmaMicrophoneBuffCplt) {
-		  for(i=0;i<FRAME_SIZE;i++) {
-			  tmp_frame[i] = wav_ex[wav_offset]+0x8000;
-			  wav_offset++;
-			  if(wav_offset>=sizeof(wav_ex)/2) wav_offset = 0;
-		  }
-		  //add_audio_frame(&tmp_frame[0],FRAME_SIZE);
-		  //add_empty_audio_frame();
-		  encoded_length = opus_encode(enc, (opus_int16*)tmp_frame, FRAME_SIZE,(unsigned char*) &microphone_encoded_data[0][0], 256);
-		  if(encoded_length) {
-			  int res = opus_decode(dec,(unsigned char*)&microphone_encoded_data[0][0],encoded_length,&audio_stream[0],1024,0);
-			  if(res==FRAME_SIZE) {
-				  HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
-				  add_audio_frame(&audio_stream[0],FRAME_SIZE);
-			  }
-		  }
-
-		  DmaMicrophoneBuffCplt = 0;
-	  }else if(DmaMicrophoneHalfBuffCplt) {
-		  for(i=0;i<FRAME_SIZE;i++) {
-			  tmp_frame[i] = wav_ex[wav_offset]+0x8000;
-			  wav_offset++;
-			  if(wav_offset>=sizeof(wav_ex)/2) wav_offset = 0;
-		  }
-		  //add_audio_frame(&tmp_frame[0],FRAME_SIZE);
-		  //add_empty_audio_frame();
-		  encoded_length = opus_encode(enc, (opus_int16*)tmp_frame, FRAME_SIZE,(unsigned char*) &microphone_encoded_data[0][0], 256);
-		  if(encoded_length) {
-			  int res = opus_decode(dec,(unsigned char*)&microphone_encoded_data[0][0],encoded_length,&audio_stream[0],1024,0);
-			  if(res==FRAME_SIZE) {
-				  add_audio_frame(&audio_stream[0],FRAME_SIZE);
-			  }
-		  }
-		  DmaMicrophoneHalfBuffCplt = 0;
-	  }
+	  encode_work();
+	  decode_work();
 	  can_work();
     /* USER CODE END WHILE */
 
@@ -399,13 +417,16 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 	static uint8_t i = 0;
 	static uint8_t cur_num = 0;
 	static uint8_t cnt = 0;
+
 	if(HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO0)) {
 	  if(HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK) {
+		  //HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 		  cur_num = RxData[0] & 0x0F;
 		  cnt = RxData[0] >> 4;
 		  if(cur_num==cnt) {
-			  //HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
+
 			  if(RxHeader.StdId != device_id) {
+				  HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 				  if(RxData[1]==device_id) {
 					  to_id = RxHeader.StdId;
 					  point_to_point_tmr = 3000;
@@ -415,6 +436,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 					  add_can_frame(&can_frame[0],can_pckt_length);
 					  //frame_ready=1;
 				  }else if(RxData[1]==0xFF) {
+
 					  for(i=0;i<RxHeader.DLC-2;i++) can_frame_id[RxHeader.StdId][(cur_num-1)*7+i]=RxData[i+2];
 					  can_pckt_length = (cnt-1)*7+RxHeader.DLC-2;
 					  for(i=0;i<can_pckt_length;i++) can_frame[i]=can_frame_id[RxHeader.StdId][i];
@@ -443,6 +465,7 @@ void HAL_DFSDM_FilterRegConvHalfCpltCallback(DFSDM_Filter_HandleTypeDef *hdfsdm_
 void HAL_DFSDM_FilterRegConvCpltCallback(DFSDM_Filter_HandleTypeDef *hdfsdm_filter)
 {
 	DmaMicrophoneBuffCplt = 1;
+	//HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 }
 
 
