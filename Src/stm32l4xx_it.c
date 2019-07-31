@@ -23,6 +23,7 @@
 #include "stm32l4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "uart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -54,6 +55,11 @@
 /* USER CODE BEGIN 0 */
 
 extern void can_write_from_stack();
+
+extern uint8_t rx1_buf[UART_BUF_SISE];
+extern uint8_t tx1_buf[UART_BUF_SISE];
+extern uint16_t rx1_cnt;
+extern uint16_t rx1_tmr;
 
 /* USER CODE END 0 */
 
@@ -187,7 +193,38 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
+  static uint16_t i=0;
+  static uint8_t state = 0;
   can_write_from_stack();
+  i++;
+  if(i>=100) {
+	  i = 0;
+	  switch(state) {
+	  case 0:
+		  tx1_buf[0]=0xDE;
+		  tx1_buf[1]=0xDD;
+		  tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
+		  send_data_to_uart1(tx1_buf,3);
+		  break;
+	  case 1:
+		  tx1_buf[0]=0x58;
+		  tx1_buf[1]=0xAA;
+		  tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
+		  send_data_to_uart1(tx1_buf,3);
+		  break;
+	  case 2:
+		  tx1_buf[0]=0x49;
+		  tx1_buf[1]=0xAA;
+		  tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
+		  send_data_to_uart1(tx1_buf,3);
+		  break;
+	  default:
+		  break;
+	  }
+	  state++;
+	  if(state>=5) state=0;
+  }
+  if(rx1_cnt) {rx1_tmr++;}else rx1_tmr=0;
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
@@ -242,6 +279,53 @@ void CAN1_RX0_IRQHandler(void)
   /* USER CODE BEGIN CAN1_RX0_IRQn 1 */
 
   /* USER CODE END CAN1_RX0_IRQn 1 */
+}
+
+/**
+  * @brief This function handles USART1 global interrupt.
+  */
+void USART1_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART1_IRQn 0 */
+
+	if(LL_USART_IsActiveFlag_RXNE(USART1) && LL_USART_IsEnabledIT_RXNE(USART1))
+	{
+		//HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+		rx1_buf[rx1_cnt++] = LL_USART_ReceiveData8(USART1);
+		if(rx1_cnt>=UART_BUF_SISE) rx1_cnt = 0;
+		rx1_tmr = 0;
+	};
+
+  /* USER CODE END USART1_IRQn 0 */
+  /* USER CODE BEGIN USART1_IRQn 1 */
+
+  /* USER CODE END USART1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA2 channel6 global interrupt.
+  */
+void DMA2_Channel6_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Channel6_IRQn 0 */
+
+	if(LL_DMA_IsActiveFlag_TC6(DMA2))
+	{
+	LL_DMA_ClearFlag_GI6(DMA2);
+		/* Call function Transmission complete Callback */
+		LL_DMA_DisableChannel(DMA2, LL_DMA_CHANNEL_6);
+	}
+	else if(LL_DMA_IsActiveFlag_TE6(DMA2))
+	{
+	 /* Call Error function */
+		LL_DMA_DisableChannel(DMA2, LL_DMA_CHANNEL_6);
+	}
+
+  /* USER CODE END DMA2_Channel6_IRQn 0 */
+  
+  /* USER CODE BEGIN DMA2_Channel6_IRQn 1 */
+
+  /* USER CODE END DMA2_Channel6_IRQn 1 */
 }
 
 /**

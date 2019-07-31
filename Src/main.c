@@ -25,6 +25,7 @@
 #include "dfsdm.h"
 #include "dma.h"
 #include "tim.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -36,6 +37,7 @@
 #include "frame_stack.h"
 #include "opus.h"
 #include "can_tx_stack.h"
+#include "uart.h"
 
 /* USER CODE END Includes */
 
@@ -94,7 +96,7 @@ static uint8_t               RxData[8];
 static uint8_t				 can_frame[40];
 static uint8_t				 can_frame_id[256][40];
 uint16_t can_tmr = 0;
-unsigned short device_id = 2;
+unsigned short device_id = 1;
 unsigned short gate_id = 0xFE;
 unsigned short point_to_point_tmr = 0x00;
 unsigned char to_id = 0xFF;
@@ -107,6 +109,8 @@ uint32_t wav_offset = 0;
 
 tx_stack can1_tx_stack;
 tx_stack can2_tx_stack;
+
+uint8_t button1 = 0;
 
 /* USER CODE END PV */
 
@@ -222,7 +226,11 @@ static void send_full_frame(uint8_t len, uint8_t *ptr) {
 static void can_work() {
   if(encoded_micr_ready_buf_num) {
 	  if(encoded_length>0) {
-		  send_full_frame(encoded_length,(unsigned char*)&microphone_encoded_data[encoded_micr_ready_buf_num-1]);
+		  if(button1)
+		  {
+			  send_full_frame(encoded_length,(unsigned char*)&microphone_encoded_data[encoded_micr_ready_buf_num-1]);
+			  //HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+		  }
 		  encoded_length = 0;
 	  }
 	  encoded_micr_ready_buf_num=0;
@@ -349,7 +357,12 @@ int main(void)
   MX_DFSDM1_Init();
   MX_CAN1_Init();
   MX_CAN2_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+
+  LL_DMA_EnableIT_TC(DMA2, LL_DMA_CHANNEL_6);
+  LL_DMA_EnableIT_TE(DMA2, LL_DMA_CHANNEL_6);
+  LL_USART_EnableIT_RXNE(USART1);
 
   HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_SET);
 
@@ -397,6 +410,7 @@ int main(void)
 	  encode_work();
 	  decode_work();
 	  can_work();
+	  uart1_scan();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -442,7 +456,9 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_SAI1|RCC_PERIPHCLK_DFSDM1;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_SAI1
+                              |RCC_PERIPHCLK_DFSDM1;
+  PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
   PeriphClkInit.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLLSAI1;
   PeriphClkInit.Dfsdm1ClockSelection = RCC_DFSDM1CLKSOURCE_PCLK;
   PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_HSE;
