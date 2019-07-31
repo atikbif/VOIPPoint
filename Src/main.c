@@ -35,6 +35,7 @@
 #include "wave_example.h"
 #include "frame_stack.h"
 #include "opus.h"
+#include "can_tx_stack.h"
 
 /* USER CODE END Includes */
 
@@ -85,14 +86,15 @@ int8_t encoded_length = 0;
 int16_t	audio_stream[1024];
 
 static CAN_TxHeaderTypeDef   TxHeader;
-static uint32_t              TxMailbox=0;
+static uint32_t              TxMailbox1=0;
+static uint32_t              TxMailbox2=0;
 static uint8_t               TxData[8];
 static CAN_RxHeaderTypeDef   RxHeader;
 static uint8_t               RxData[8];
 static uint8_t				 can_frame[40];
 static uint8_t				 can_frame_id[256][40];
 uint16_t can_tmr = 0;
-unsigned short device_id = 0x02;
+unsigned short device_id = 2;
 unsigned short gate_id = 0xFE;
 unsigned short point_to_point_tmr = 0x00;
 unsigned char to_id = 0xFF;
@@ -102,6 +104,9 @@ uint16_t p_cnt = 0;
 unsigned char encoded_micr_ready_buf_num = 0;
 
 uint32_t wav_offset = 0;
+
+tx_stack can1_tx_stack;
+tx_stack can2_tx_stack;
 
 /* USER CODE END PV */
 
@@ -113,6 +118,36 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+void can_write_from_stack() {
+	tx_stack_data packet;
+	uint8_t i = 0;
+	while(HAL_CAN_GetTxMailboxesFreeLevel(&hcan1)!=0) {
+
+		if(get_tx_can_packet(&can1_tx_stack,&packet)) {
+			TxHeader.StdId = device_id;
+			TxHeader.ExtId = 0;
+			TxHeader.RTR = CAN_RTR_DATA;
+			TxHeader.IDE = CAN_ID_STD;
+			TxHeader.TransmitGlobalTime = DISABLE;
+			TxHeader.DLC = packet.length;
+			for(i=0;i<packet.length;++i) TxData[i] = packet.data[i];
+			HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox1);
+		}else break;
+	}
+	while(HAL_CAN_GetTxMailboxesFreeLevel(&hcan2)!=0) {
+		if(get_tx_can_packet(&can2_tx_stack,&packet)) {
+			TxHeader.StdId = device_id;
+			TxHeader.ExtId = 0;
+			TxHeader.RTR = CAN_RTR_DATA;
+			TxHeader.IDE = CAN_ID_STD;
+			TxHeader.TransmitGlobalTime = DISABLE;
+			TxHeader.DLC = packet.length;
+			for(i=0;i<packet.length;++i) TxData[i] = packet.data[i];
+			HAL_CAN_AddTxMessage(&hcan2, &TxHeader, TxData, &TxMailbox2);
+		}else break;
+	}
+}
 
 static void initCANFilter() {
 	CAN_FilterTypeDef  sFilterConfig;
@@ -129,13 +164,27 @@ static void initCANFilter() {
 	sFilterConfig.SlaveStartFilterBank = 14;
 
 	HAL_CAN_ConfigFilter(&hcan1, &sFilterConfig);
+
+	sFilterConfig.FilterBank = 14;
+	sFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
+	sFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
+	sFilterConfig.FilterIdHigh = 0x0000;
+	sFilterConfig.FilterIdLow = 0x0000;
+	sFilterConfig.FilterMaskIdHigh = 0x0000;
+	sFilterConfig.FilterMaskIdLow = 0x0000;
+	sFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
+	sFilterConfig.FilterActivation = ENABLE;
+	sFilterConfig.SlaveStartFilterBank = 14;
+	HAL_CAN_ConfigFilter(&hcan2, &sFilterConfig);
 }
 
 static void send_full_frame(uint8_t len, uint8_t *ptr) {
 	uint8_t i=len;
 	uint8_t cur_pckt = 1;
 	uint8_t pckt_cnt = 0;
-	uint16_t wait_delay = 0;
+	//uint16_t wait_delay = 0;
+
+	tx_stack_data packet;
 
 	while(i) {
 		pckt_cnt++;
@@ -145,27 +194,25 @@ static void send_full_frame(uint8_t len, uint8_t *ptr) {
 	}
 	i=1;
 
+
 	while(cur_pckt<=pckt_cnt) {
-		TxHeader.StdId = device_id;
-		TxHeader.ExtId = 0;
-		TxHeader.RTR = CAN_RTR_DATA;
-		TxHeader.IDE = CAN_ID_STD;
-		TxHeader.TransmitGlobalTime = DISABLE;
+		packet.id = device_id;
+		packet.priority = LOW_PACKET_PRIORITY;
 		if(cur_pckt==pckt_cnt) { // last packet
-			TxHeader.DLC = 2+len;
-			TxData[0] = (cur_pckt&0x0F)|((pckt_cnt&0x0F)<<4); // current packet number and packets cnt
-			TxData[1] = to_id;
-			for(i=0;i<len;i++) TxData[i+2] = ptr[(cur_pckt-1)*7+i];
-			while(HAL_CAN_GetTxMailboxesFreeLevel(&hcan1) == 0) {wait_delay++;if(wait_delay>=1000) {NVIC_SystemReset();return;} HAL_Delay(1);}
-			HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox);
+			packet.length = 2+len;
+			packet.data[0] = (cur_pckt&0x0F)|((pckt_cnt&0x0F)<<4);
+			packet.data[1] = to_id;
+			for(i=0;i<len;i++) packet.data[i+2] = ptr[(cur_pckt-1)*7+i];
+			add_tx_can_packet(&can1_tx_stack,&packet);
+			add_tx_can_packet(&can2_tx_stack,&packet);
 			cur_pckt++;
 			len=0;
 		}else {
-			TxHeader.DLC = 0x08;
-			TxData[0] = (cur_pckt&0x0F)|((pckt_cnt&0x0F)<<4); // current packet number and packets cnt
-			for(i=0;i<7;i++) TxData[i+1] = ptr[(cur_pckt-1)*7+i];
-			while(HAL_CAN_GetTxMailboxesFreeLevel(&hcan1) == 0) {wait_delay++;if(wait_delay>=1000) {NVIC_SystemReset();return;}HAL_Delay(1);}
-			HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox);
+			packet.length = 8;
+			packet.data[0] = (cur_pckt&0x0F)|((pckt_cnt&0x0F)<<4);
+			for(i=0;i<7;i++) packet.data[i+1] = ptr[(cur_pckt-1)*7+i];
+			add_tx_can_packet(&can1_tx_stack,&packet);
+			add_tx_can_packet(&can2_tx_stack,&packet);
 			cur_pckt++;
 			len-=7;
 		}
@@ -196,7 +243,7 @@ static void encode_work() {
 	  //HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET);
 	  encoded_length = opus_encode(enc, (opus_int16*)tmp_frame, FRAME_SIZE,(unsigned char*) &microphone_encoded_data[1][0], 256);
 	  if(encoded_length>0) {
-		  //if(encoded_length>30) HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
+		  //if(encoded_length>30) HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 		  encoded_micr_ready_buf_num = 2;
 	  }
 	  //HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET);
@@ -221,8 +268,10 @@ static void decode_work() {
 	static uint8_t can_buf[40];
 	int res = 0;
 	unsigned short can_length = 0;
+
 	can_length = get_can_frame(can_buf);
 	if(can_length) {
+
 		can_tmr = 0;
 		res = opus_decode(dec,(unsigned char*)&can_buf[0],can_length,&audio_stream[0],1024,0);
 		if(res!=FRAME_SIZE) {
@@ -241,7 +290,6 @@ static void convert(uint8_t num) {
 	uint16_t i = 0;
 	float32_t k = 0.04;
 	if(get_audio_frame(tmp_frame)==0) {
-		//HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 		for(i=0;i<FRAME_SIZE;i++) tmp_frame[i] = 0;
 	}
 
@@ -300,6 +348,7 @@ int main(void)
   MX_TIM6_Init();
   MX_DFSDM1_Init();
   MX_CAN1_Init();
+  MX_CAN2_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_SET);
@@ -318,13 +367,18 @@ int main(void)
 	init_audio_frames();
 	initCANFilter();
 	HAL_CAN_Start(&hcan1);
+	HAL_CAN_Start(&hcan2);
 	if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK) {
+		Error_Handler();
+	}
+	if (HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK) {
 		Error_Handler();
 	}
 
   HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1,(uint32_t*)conv,FRAME_SIZE*6*2,DAC_ALIGN_12B_L);
 
-
+  init_can_tx_stack(&can1_tx_stack);
+  init_can_tx_stack(&can2_tx_stack);
 
   /* USER CODE END 2 */
 
@@ -417,15 +471,15 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 	static uint8_t i = 0;
 	static uint8_t cur_num = 0;
 	static uint8_t cnt = 0;
+	tx_stack_data packet;
 
 	if(HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO0)) {
 	  if(HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK) {
-		  //HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 		  cur_num = RxData[0] & 0x0F;
 		  cnt = RxData[0] >> 4;
 		  if(cur_num==cnt) {
-
-			  if(RxHeader.StdId != device_id) {
+			  if(RxHeader.StdId != device_id)
+			  {
 				  HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 				  if(RxData[1]==device_id) {
 					  to_id = RxHeader.StdId;
@@ -451,6 +505,53 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 		  }else {
 			  for(i=0;i<7;i++) can_frame_id[RxHeader.StdId][(cur_num-1)*7+i]=RxData[i+1];
 		  }
+		  if(RxHeader.StdId != device_id) {
+			  packet.id = RxHeader.StdId;
+			  packet.priority = LOW_PACKET_PRIORITY;
+			  packet.length = RxHeader.DLC;
+			  for(i=0;i<packet.length;++i) packet.data[i] = RxData[i];
+			  add_tx_can_packet(&can2_tx_stack,&packet);
+		  }
+	  }
+  }
+  if(HAL_CAN_GetRxFifoFillLevel(&hcan2, CAN_RX_FIFO0)) {
+	  if(HAL_CAN_GetRxMessage(&hcan2, CAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK) {
+		  cur_num = RxData[0] & 0x0F;
+		  cnt = RxData[0] >> 4;
+		  if(cur_num==cnt) {
+			  if(RxHeader.StdId != device_id)
+			  {
+				  HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+				  if(RxData[1]==device_id) {
+					  to_id = RxHeader.StdId;
+					  point_to_point_tmr = 3000;
+					  for(i=0;i<RxHeader.DLC-2;i++) can_frame_id[RxHeader.StdId][(cur_num-1)*7+i]=RxData[i+2];
+					  can_pckt_length = (cnt-1)*7+RxHeader.DLC-2;
+					  for(i=0;i<can_pckt_length;i++) can_frame[i]=can_frame_id[RxHeader.StdId][i];
+					  add_can_frame(&can_frame[0],can_pckt_length);
+					  //frame_ready=1;
+				  }else if(RxData[1]==0xFF) {
+					  for(i=0;i<RxHeader.DLC-2;i++) can_frame_id[RxHeader.StdId][(cur_num-1)*7+i]=RxData[i+2];
+					  can_pckt_length = (cnt-1)*7+RxHeader.DLC-2;
+					  for(i=0;i<can_pckt_length;i++) can_frame[i]=can_frame_id[RxHeader.StdId][i];
+					  to_id = 0xFF;
+					  p_cnt++;
+					  add_can_frame(&can_frame[0],can_pckt_length);
+
+					  //frame_ready=1;
+				  }
+			  }
+
+		  }else {
+			  for(i=0;i<7;i++) can_frame_id[RxHeader.StdId][(cur_num-1)*7+i]=RxData[i+1];
+		  }
+		  if(RxHeader.StdId != device_id) {
+			  packet.id = RxHeader.StdId;
+			  packet.priority = LOW_PACKET_PRIORITY;
+			  packet.length = RxHeader.DLC;
+			  for(i=0;i<packet.length;++i) packet.data[i] = RxData[i];
+			  add_tx_can_packet(&can1_tx_stack,&packet);
+		  }
 	  }
   }
 }
@@ -465,7 +566,6 @@ void HAL_DFSDM_FilterRegConvHalfCpltCallback(DFSDM_Filter_HandleTypeDef *hdfsdm_
 void HAL_DFSDM_FilterRegConvCpltCallback(DFSDM_Filter_HandleTypeDef *hdfsdm_filter)
 {
 	DmaMicrophoneBuffCplt = 1;
-	//HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 }
 
 
@@ -479,7 +579,6 @@ void HAL_DAC_ConvCpltCallbackCh1(DAC_HandleTypeDef *hdac) {
 void HAL_DAC_ConvHalfCpltCallbackCh1(DAC_HandleTypeDef *hdac) {
 	DmaDacHalfBuffCplt = 1;
 	//convert(0);
-	//HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 }
 
 /* USER CODE END 4 */

@@ -1,407 +1,407 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
 	<storageModule moduleId="org.eclipse.cdt.core.settings">
 		<cconfiguration id="com.atollic.truestudio.exe.debug.1518366166">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.atollic.truestudio.exe.debug.1518366166" moduleId="org.eclipse.cdt.core.settings" name="Debug">
-				<externalSettings />
+				<externalSettings/>
 				<extensions>
-					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser" />
-					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser" />
-					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser" />
-					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser" />
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 				<configuration artifactExtension="elf" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="" id="com.atollic.truestudio.exe.debug.1518366166" name="Debug" parent="com.atollic.truestudio.exe.debug" postbuildStep="arm-atollic-eabi-objcopy.exe -O ihex &quot;${BuildArtifactFileBaseName}.elf&quot; &quot;${BuildArtifactFileBaseName}.hex&quot;" prebuildStep="">
 					<folderInfo id="com.atollic.truestudio.exe.debug.1518366166.2031504340" name="/" resourcePath="">
 						<toolChain id="com.atollic.truestudio.exe.debug.toolchain.683225115" name="Atollic ARM Tools" superClass="com.atollic.truestudio.exe.debug.toolchain">
-							<option id="com.atollic.truestudio.general.runtimelib.667097320" name="Runtime Library" superClass="com.atollic.truestudio.general.runtimelib" useByScannerDiscovery="false" value="com.atollic.truestudio.ld.general.clib.small" valueType="enumerated" />
-							<option id="com.atollic.truestudio.toolchain_options.mcu.1238081540" name="Microcontroller" superClass="com.atollic.truestudio.toolchain_options.mcu" useByScannerDiscovery="false" value="STM32L496RG" valueType="string" />
-							<option id="com.atollic.truestudio.toolchain_options.vendor.1125581691" name="Vendor name" superClass="com.atollic.truestudio.toolchain_options.vendor" useByScannerDiscovery="false" value="STMicroelectronics" valueType="string" />
-							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="com.atollic.truestudio.exe.debug.toolchain.platform.2054752829" isAbstract="false" name="Debug platform" superClass="com.atollic.truestudio.exe.debug.toolchain.platform" />
-							<builder buildPath="${workspace_loc:/VoipPoint}/Debug" customBuilderProperties="toolChainpathType=1|toolChainpathString=C:\\Program Files (x86)\\Atollic\\TrueSTUDIO for STM32 9.3.0\\ARMTools\\bin|" id="com.atollic.truestudio.mbs.builder1.1222194476" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="CDT Internal Builder" superClass="com.atollic.truestudio.mbs.builder1">
+							<option id="com.atollic.truestudio.general.runtimelib.667097320" name="Runtime Library" superClass="com.atollic.truestudio.general.runtimelib" useByScannerDiscovery="false" value="com.atollic.truestudio.ld.general.clib.small" valueType="enumerated"/>
+							<option id="com.atollic.truestudio.toolchain_options.mcu.1238081540" name="Microcontroller" superClass="com.atollic.truestudio.toolchain_options.mcu" useByScannerDiscovery="false" value="STM32L496RG" valueType="string"/>
+							<option id="com.atollic.truestudio.toolchain_options.vendor.1125581691" name="Vendor name" superClass="com.atollic.truestudio.toolchain_options.vendor" useByScannerDiscovery="false" value="STMicroelectronics" valueType="string"/>
+							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="com.atollic.truestudio.exe.debug.toolchain.platform.2054752829" isAbstract="false" name="Debug platform" superClass="com.atollic.truestudio.exe.debug.toolchain.platform"/>
+							<builder buildPath="${workspace_loc:/VoipPoint}/Debug" customBuilderProperties="toolChainpathString=C:\\Program Files (x86)\\Atollic\\TrueSTUDIO for STM32 9.3.0\\ARMTools\\bin|toolChainpathType=1|" id="com.atollic.truestudio.mbs.builder1.1222194476" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="CDT Internal Builder" superClass="com.atollic.truestudio.mbs.builder1">
 								<outputEntries>
-									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="Debug" />
+									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="Debug"/>
 								</outputEntries>
 							</builder>
 							<tool command="arm-atollic-eabi-gcc -c" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG}${OUTPUT_PREFIX} ${OUTPUT} ${INPUTS}" id="com.atollic.truestudio.exe.debug.toolchain.as.1545899283" name="Assembler" superClass="com.atollic.truestudio.exe.debug.toolchain.as">
-								<option id="com.atollic.truestudio.common_options.target.endianess.1608144567" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.mcpu.286463162" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" useByScannerDiscovery="false" value="STM32L496RG" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.instr_set.2033833414" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated" />
-								<option id="com.atollic.truestudio.as.general.incpath.770237934" name="Include path" superClass="com.atollic.truestudio.as.general.incpath" useByScannerDiscovery="false" />
-								<option id="com.atollic.truestudio.gcc.symbols.defined.1670122205" name="Defined symbols" superClass="com.atollic.truestudio.gcc.symbols.defined" useByScannerDiscovery="false" />
-								<option id="com.atollic.truestudio.as.general.otherflags.51384659" name="Other options" superClass="com.atollic.truestudio.as.general.otherflags" useByScannerDiscovery="false" value="" valueType="string" />
-								<option id="com.atollic.truestudio.as.general.warnings.1324541152" name="Suppress warnings " superClass="com.atollic.truestudio.as.general.warnings" useByScannerDiscovery="false" value="true" valueType="boolean" />
-								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated" />
-								<inputType id="com.atollic.truestudio.as.input.374932590" name="Input" superClass="com.atollic.truestudio.as.input" />
+								<option id="com.atollic.truestudio.common_options.target.endianess.1608144567" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.mcpu.286463162" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" useByScannerDiscovery="false" value="STM32L496RG" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.instr_set.2033833414" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.as.general.incpath.770237934" name="Include path" superClass="com.atollic.truestudio.as.general.incpath" useByScannerDiscovery="false"/>
+								<option id="com.atollic.truestudio.gcc.symbols.defined.1670122205" name="Defined symbols" superClass="com.atollic.truestudio.gcc.symbols.defined" useByScannerDiscovery="false"/>
+								<option id="com.atollic.truestudio.as.general.otherflags.51384659" name="Other options" superClass="com.atollic.truestudio.as.general.otherflags" useByScannerDiscovery="false" value="" valueType="string"/>
+								<option id="com.atollic.truestudio.as.general.warnings.1324541152" name="Suppress warnings " superClass="com.atollic.truestudio.as.general.warnings" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
+								<inputType id="com.atollic.truestudio.as.input.374932590" name="Input" superClass="com.atollic.truestudio.as.input"/>
 							</tool>
 							<tool command="arm-atollic-eabi-gcc -c " commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG}${OUTPUT_PREFIX} ${OUTPUT} ${INPUTS}" id="com.atollic.truestudio.exe.debug.toolchain.gcc.1836874447" name="C Compiler" superClass="com.atollic.truestudio.exe.debug.toolchain.gcc">
 								<option id="com.atollic.truestudio.gcc.directories.select.330946435" name="Include path" superClass="com.atollic.truestudio.gcc.directories.select" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="../Inc" />
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/silk/fixed}&quot;" />
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/silk}&quot;" />
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/src}&quot;" />
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/celt}&quot;" />
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/include}&quot;" />
-									<listOptionValue builtIn="false" value="../Drivers/STM32L4xx_HAL_Driver/Inc" />
-									<listOptionValue builtIn="false" value="../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy" />
-									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32L4xx/Include" />
-									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include" />
+									<listOptionValue builtIn="false" value="../Inc"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/silk/fixed}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/silk}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/celt}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/include}&quot;"/>
+									<listOptionValue builtIn="false" value="../Drivers/STM32L4xx_HAL_Driver/Inc"/>
+									<listOptionValue builtIn="false" value="../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy"/>
+									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32L4xx/Include"/>
+									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 								</option>
 								<option id="com.atollic.truestudio.gcc.symbols.defined.1670122205" name="Defined symbols" superClass="com.atollic.truestudio.gcc.symbols.defined" useByScannerDiscovery="false" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="__weak=__attribute__((weak))" />
-									<listOptionValue builtIn="false" value="HAVE_CONFIG_H" />
-									<listOptionValue builtIn="false" value="ARM_MATH_CM4" />
-									<listOptionValue builtIn="false" value="__FPU_PRESENT" />
-									<listOptionValue builtIn="false" value="__packed=__attribute__((__packed__))" />
-									<listOptionValue builtIn="false" value="USE_HAL_DRIVER" />
-									<listOptionValue builtIn="false" value="STM32L496xx" />
+									<listOptionValue builtIn="false" value="__weak=__attribute__((weak))"/>
+									<listOptionValue builtIn="false" value="HAVE_CONFIG_H"/>
+									<listOptionValue builtIn="false" value="ARM_MATH_CM4"/>
+									<listOptionValue builtIn="false" value="__FPU_PRESENT"/>
+									<listOptionValue builtIn="false" value="__packed=__attribute__((__packed__))"/>
+									<listOptionValue builtIn="false" value="USE_HAL_DRIVER"/>
+									<listOptionValue builtIn="false" value="STM32L496xx"/>
 								</option>
-								<option id="com.atollic.truestudio.common_options.target.endianess.1854274048" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.mcpu.191909026" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" useByScannerDiscovery="false" value="STM32L496RG" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.instr_set.1503159865" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated" />
-								<option id="com.atollic.truestudio.gcc.optimization.prep_garbage.586275206" name="Prepare dead code removal " superClass="com.atollic.truestudio.gcc.optimization.prep_garbage" useByScannerDiscovery="false" value="true" valueType="boolean" />
-								<option id="com.atollic.truestudio.gcc.optimization.prep_data.1044766448" name="Prepare dead data removal" superClass="com.atollic.truestudio.gcc.optimization.prep_data" useByScannerDiscovery="false" value="true" valueType="boolean" />
-								<option id="com.atollic.truestudio.gcc.misc.otherflags.895097519" name="Other options" superClass="com.atollic.truestudio.gcc.misc.otherflags" useByScannerDiscovery="false" value="" valueType="string" />
-								<option id="com.atollic.truestudio.exe.debug.toolchain.gcc.optimization.level.1763412676" name="Optimization Level" superClass="com.atollic.truestudio.exe.debug.toolchain.gcc.optimization.level" useByScannerDiscovery="false" value="com.atollic.truestudio.gcc.optimization.level.0s" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.interwork.1173495076" name="Mix ARM/Thumb" superClass="com.atollic.truestudio.common_options.target.interwork" useByScannerDiscovery="false" />
-								<option id="com.atollic.truestudio.gcc.optimization.no_strict_aliasing.1421357406" name="No strict aliasing" superClass="com.atollic.truestudio.gcc.optimization.no_strict_aliasing" useByScannerDiscovery="false" value="true" valueType="boolean" />
-								<inputType id="com.atollic.truestudio.gcc.input.850396938" superClass="com.atollic.truestudio.gcc.input" />
+								<option id="com.atollic.truestudio.common_options.target.endianess.1854274048" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.mcpu.191909026" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" useByScannerDiscovery="false" value="STM32L496RG" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.instr_set.1503159865" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.gcc.optimization.prep_garbage.586275206" name="Prepare dead code removal " superClass="com.atollic.truestudio.gcc.optimization.prep_garbage" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+								<option id="com.atollic.truestudio.gcc.optimization.prep_data.1044766448" name="Prepare dead data removal" superClass="com.atollic.truestudio.gcc.optimization.prep_data" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+								<option id="com.atollic.truestudio.gcc.misc.otherflags.895097519" name="Other options" superClass="com.atollic.truestudio.gcc.misc.otherflags" useByScannerDiscovery="false" value="" valueType="string"/>
+								<option id="com.atollic.truestudio.exe.debug.toolchain.gcc.optimization.level.1763412676" name="Optimization Level" superClass="com.atollic.truestudio.exe.debug.toolchain.gcc.optimization.level" useByScannerDiscovery="false" value="com.atollic.truestudio.gcc.optimization.level.0s" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.interwork.1173495076" name="Mix ARM/Thumb" superClass="com.atollic.truestudio.common_options.target.interwork" useByScannerDiscovery="false"/>
+								<option id="com.atollic.truestudio.gcc.optimization.no_strict_aliasing.1421357406" name="No strict aliasing" superClass="com.atollic.truestudio.gcc.optimization.no_strict_aliasing" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+								<inputType id="com.atollic.truestudio.gcc.input.850396938" superClass="com.atollic.truestudio.gcc.input"/>
 							</tool>
 							<tool id="com.atollic.truestudio.exe.debug.toolchain.ld.1444973427" name="C Linker" superClass="com.atollic.truestudio.exe.debug.toolchain.ld">
-								<option id="com.atollic.truestudio.common_options.target.endianess.662778612" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.mcpu.35700531" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" useByScannerDiscovery="false" value="STM32L496RG" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.instr_set.566688004" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated" />
-								<option id="com.atollic.truestudio.ld.general.scriptfile.1350476438" name="Linker script" superClass="com.atollic.truestudio.ld.general.scriptfile" useByScannerDiscovery="false" value="../STM32L496RG_FLASH.ld" valueType="string" />
-								<option id="com.atollic.truestudio.ld.optimization.do_garbage.1816004776" name="Dead code removal " superClass="com.atollic.truestudio.ld.optimization.do_garbage" useByScannerDiscovery="false" value="true" valueType="boolean" />
-								<option id="com.atollic.truestudio.ld.libraries.list.848669414" name="Libraries" superClass="com.atollic.truestudio.ld.libraries.list" useByScannerDiscovery="false" />
-								<option id="com.atollic.truestudio.ld.libraries.searchpath.1273009461" name="Library search path" superClass="com.atollic.truestudio.ld.libraries.searchpath" useByScannerDiscovery="false" />
-								<option id="com.atollic.truestudio.ld.misc.linkerflags.1948405714" name="Other options" superClass="com.atollic.truestudio.ld.misc.linkerflags" useByScannerDiscovery="false" value="" valueType="string" />
-								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated" />
+								<option id="com.atollic.truestudio.common_options.target.endianess.662778612" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.mcpu.35700531" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" useByScannerDiscovery="false" value="STM32L496RG" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.instr_set.566688004" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.ld.general.scriptfile.1350476438" name="Linker script" superClass="com.atollic.truestudio.ld.general.scriptfile" useByScannerDiscovery="false" value="../STM32L496RG_FLASH.ld" valueType="string"/>
+								<option id="com.atollic.truestudio.ld.optimization.do_garbage.1816004776" name="Dead code removal " superClass="com.atollic.truestudio.ld.optimization.do_garbage" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+								<option id="com.atollic.truestudio.ld.libraries.list.848669414" name="Libraries" superClass="com.atollic.truestudio.ld.libraries.list" useByScannerDiscovery="false"/>
+								<option id="com.atollic.truestudio.ld.libraries.searchpath.1273009461" name="Library search path" superClass="com.atollic.truestudio.ld.libraries.searchpath" useByScannerDiscovery="false"/>
+								<option id="com.atollic.truestudio.ld.misc.linkerflags.1948405714" name="Other options" superClass="com.atollic.truestudio.ld.misc.linkerflags" useByScannerDiscovery="false" value="" valueType="string"/>
+								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
 								<inputType id="com.atollic.truestudio.ld.input.1372975870" name="Input" superClass="com.atollic.truestudio.ld.input">
-									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)" />
-									<additionalInput kind="additionalinput" paths="$(LIBS)" />
+									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
+									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
 								</inputType>
 							</tool>
 							<tool id="com.atollic.truestudio.exe.debug.toolchain.gpp.981298185" name="C++ Compiler" superClass="com.atollic.truestudio.exe.debug.toolchain.gpp">
 								<option id="com.atollic.truestudio.gpp.directories.select.330946435" name="Include path" superClass="com.atollic.truestudio.gpp.directories.select" valueType="includePath">
-									<listOptionValue builtIn="false" value="../Inc" />
-									<listOptionValue builtIn="false" value="../Drivers/STM32L4xx_HAL_Driver/Inc" />
-									<listOptionValue builtIn="false" value="../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy" />
-									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32L4xx/Include" />
-									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include" />
+									<listOptionValue builtIn="false" value="../Inc"/>
+									<listOptionValue builtIn="false" value="../Drivers/STM32L4xx_HAL_Driver/Inc"/>
+									<listOptionValue builtIn="false" value="../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy"/>
+									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32L4xx/Include"/>
+									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 								</option>
 								<option id="com.atollic.truestudio.gpp.symbols.defined.1619552487" name="Defined symbols" superClass="com.atollic.truestudio.gpp.symbols.defined" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="__weak=__attribute__((weak))" />
-									<listOptionValue builtIn="false" value="__packed=__attribute__((__packed__))" />
-									<listOptionValue builtIn="false" value="USE_HAL_DRIVER" />
-									<listOptionValue builtIn="false" value="STM32L496xx" />
+									<listOptionValue builtIn="false" value="__weak=__attribute__((weak))"/>
+									<listOptionValue builtIn="false" value="__packed=__attribute__((__packed__))"/>
+									<listOptionValue builtIn="false" value="USE_HAL_DRIVER"/>
+									<listOptionValue builtIn="false" value="STM32L496xx"/>
 								</option>
-								<option id="com.atollic.truestudio.common_options.target.endianess.176262651" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.mcpu.630487808" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" value="STM32L496RG" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.instr_set.227324580" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated" />
-								<option id="com.atollic.truestudio.gpp.optimization.prep_garbage.26464025" name="Prepare dead code removal" superClass="com.atollic.truestudio.gpp.optimization.prep_garbage" value="true" valueType="boolean" />
-								<option id="com.atollic.truestudio.gpp.optimization.fno_rtti.1009504734" name="Disable RTTI" superClass="com.atollic.truestudio.gpp.optimization.fno_rtti" />
-								<option id="com.atollic.truestudio.gpp.optimization.fno_exceptions.342217745" name="Disable exception handling" superClass="com.atollic.truestudio.gpp.optimization.fno_exceptions" />
-								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated" />
+								<option id="com.atollic.truestudio.common_options.target.endianess.176262651" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.mcpu.630487808" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" value="STM32L496RG" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.instr_set.227324580" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.gpp.optimization.prep_garbage.26464025" name="Prepare dead code removal" superClass="com.atollic.truestudio.gpp.optimization.prep_garbage" value="true" valueType="boolean"/>
+								<option id="com.atollic.truestudio.gpp.optimization.fno_rtti.1009504734" name="Disable RTTI" superClass="com.atollic.truestudio.gpp.optimization.fno_rtti"/>
+								<option id="com.atollic.truestudio.gpp.optimization.fno_exceptions.342217745" name="Disable exception handling" superClass="com.atollic.truestudio.gpp.optimization.fno_exceptions"/>
+								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
 							</tool>
 							<tool id="com.atollic.truestudio.exe.debug.toolchain.ldcc.428260" name="C++ Linker" superClass="com.atollic.truestudio.exe.debug.toolchain.ldcc">
-								<option id="com.atollic.truestudio.common_options.target.endianess.2051741049" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.mcpu.1701726850" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" value="STM32L496RG" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.instr_set.1600237525" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated" />
-								<option id="com.atollic.truestudio.ldcc.general.scriptfile.561304432" name="Linker script" superClass="com.atollic.truestudio.ldcc.general.scriptfile" value="../STM32L496RG_FLASH.ld" valueType="string" />
-								<option id="com.atollic.truestudio.ldcc.optimization.do_garbage.956844137" name="Dead code removal" superClass="com.atollic.truestudio.ldcc.optimization.do_garbage" value="true" valueType="boolean" />
-								<option id="com.atollic.truestudio.ldcc.libraries.list.848669414" name="Libraries" superClass="com.atollic.truestudio.ldcc.libraries.list" />
-								<option id="com.atollic.truestudio.ldcc.libraries.searchpath.1273009461" name="Library search path" superClass="com.atollic.truestudio.ldcc.libraries.searchpath" />
-								<option id="com.atollic.truestudio.ldcc.misc.linkerflags.1948405714" name="Other options" superClass="com.atollic.truestudio.ldcc.misc.linkerflags" value="" valueType="string" />
-								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated" />
+								<option id="com.atollic.truestudio.common_options.target.endianess.2051741049" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.mcpu.1701726850" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" value="STM32L496RG" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.instr_set.1600237525" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.ldcc.general.scriptfile.561304432" name="Linker script" superClass="com.atollic.truestudio.ldcc.general.scriptfile" value="../STM32L496RG_FLASH.ld" valueType="string"/>
+								<option id="com.atollic.truestudio.ldcc.optimization.do_garbage.956844137" name="Dead code removal" superClass="com.atollic.truestudio.ldcc.optimization.do_garbage" value="true" valueType="boolean"/>
+								<option id="com.atollic.truestudio.ldcc.libraries.list.848669414" name="Libraries" superClass="com.atollic.truestudio.ldcc.libraries.list"/>
+								<option id="com.atollic.truestudio.ldcc.libraries.searchpath.1273009461" name="Library search path" superClass="com.atollic.truestudio.ldcc.libraries.searchpath"/>
+								<option id="com.atollic.truestudio.ldcc.misc.linkerflags.1948405714" name="Other options" superClass="com.atollic.truestudio.ldcc.misc.linkerflags" value="" valueType="string"/>
+								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
 							</tool>
-							<tool id="com.atollic.truestudio.exe.debug.toolchain.secoutput.839033486" name="Other" superClass="com.atollic.truestudio.exe.debug.toolchain.secoutput" />
-							<tool id="com.atollic.truestudio.ar.base.554865105" name="Archiver" superClass="com.atollic.truestudio.ar.base" />
+							<tool id="com.atollic.truestudio.exe.debug.toolchain.secoutput.839033486" name="Other" superClass="com.atollic.truestudio.exe.debug.toolchain.secoutput"/>
+							<tool id="com.atollic.truestudio.ar.base.554865105" name="Archiver" superClass="com.atollic.truestudio.ar.base"/>
 						</toolChain>
 					</folderInfo>
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1279772866" name="INSTALL" rcbsApplicability="disable" resourcePath="opus-1.3/INSTALL" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1158146149" name="celt_sources.mk" rcbsApplicability="disable" resourcePath="opus-1.3/celt_sources.mk" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.450502025" name="config.h.in" rcbsApplicability="disable" resourcePath="opus-1.3/config.h.in" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.336214224" name="silk_sources.mk" rcbsApplicability="disable" resourcePath="opus-1.3/silk_sources.mk" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.651679225" name="Makefile.am" rcbsApplicability="disable" resourcePath="opus-1.3/Makefile.am" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.644252505" name="COPYING" rcbsApplicability="disable" resourcePath="opus-1.3/COPYING" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.11535365" name="ltmain.sh" rcbsApplicability="disable" resourcePath="opus-1.3/ltmain.sh" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.596410736" name="Makefile.unix" rcbsApplicability="disable" resourcePath="opus-1.3/Makefile.unix" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1729030537" name="celt_headers.mk" rcbsApplicability="disable" resourcePath="opus-1.3/celt_headers.mk" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1350042475" name="opus_sources.mk" rcbsApplicability="disable" resourcePath="opus-1.3/opus_sources.mk" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.725688517" name="compile" rcbsApplicability="disable" resourcePath="opus-1.3/compile" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.69351660" name="missing" rcbsApplicability="disable" resourcePath="opus-1.3/missing" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.451096011" name="Makefile.mips" rcbsApplicability="disable" resourcePath="opus-1.3/Makefile.mips" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1342371733" name="Makefile.in" rcbsApplicability="disable" resourcePath="opus-1.3/Makefile.in" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.367470251" name="configure.ac" rcbsApplicability="disable" resourcePath="opus-1.3/configure.ac" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1944653362" name="opus_headers.mk" rcbsApplicability="disable" resourcePath="opus-1.3/opus_headers.mk" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.327057422" name="opus.pc.in" rcbsApplicability="disable" resourcePath="opus-1.3/opus.pc.in" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1723459924" name="opus-uninstalled.pc.in" rcbsApplicability="disable" resourcePath="opus-1.3/opus-uninstalled.pc.in" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1037215402" name="config.guess" rcbsApplicability="disable" resourcePath="opus-1.3/config.guess" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1720684484" name="silk_headers.mk" rcbsApplicability="disable" resourcePath="opus-1.3/silk_headers.mk" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1814455924" name="AUTHORS" rcbsApplicability="disable" resourcePath="opus-1.3/AUTHORS" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1885124776" name="config.sub" rcbsApplicability="disable" resourcePath="opus-1.3/config.sub" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.179107799" name="configure" rcbsApplicability="disable" resourcePath="opus-1.3/configure" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.642210175" name="install-sh" rcbsApplicability="disable" resourcePath="opus-1.3/install-sh" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1235903941" name="opus.m4" rcbsApplicability="disable" resourcePath="opus-1.3/opus.m4" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.661759382" name="package_version" rcbsApplicability="disable" resourcePath="opus-1.3/package_version" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1719779323" name="README" rcbsApplicability="disable" resourcePath="opus-1.3/README" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.141752767" name="test-driver" rcbsApplicability="disable" resourcePath="opus-1.3/test-driver" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1362445740" name="NEWS" rcbsApplicability="disable" resourcePath="opus-1.3/NEWS" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.462188048" name="aclocal.m4" rcbsApplicability="disable" resourcePath="opus-1.3/aclocal.m4" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1506501761" name="ChangeLog" rcbsApplicability="disable" resourcePath="opus-1.3/ChangeLog" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1296603011" name="depcomp" rcbsApplicability="disable" resourcePath="opus-1.3/depcomp" toolsToInvoke="" />
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1279772866" name="INSTALL" rcbsApplicability="disable" resourcePath="opus-1.3/INSTALL" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1158146149" name="celt_sources.mk" rcbsApplicability="disable" resourcePath="opus-1.3/celt_sources.mk" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.450502025" name="config.h.in" rcbsApplicability="disable" resourcePath="opus-1.3/config.h.in" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.336214224" name="silk_sources.mk" rcbsApplicability="disable" resourcePath="opus-1.3/silk_sources.mk" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.651679225" name="Makefile.am" rcbsApplicability="disable" resourcePath="opus-1.3/Makefile.am" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.644252505" name="COPYING" rcbsApplicability="disable" resourcePath="opus-1.3/COPYING" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.11535365" name="ltmain.sh" rcbsApplicability="disable" resourcePath="opus-1.3/ltmain.sh" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.596410736" name="Makefile.unix" rcbsApplicability="disable" resourcePath="opus-1.3/Makefile.unix" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1729030537" name="celt_headers.mk" rcbsApplicability="disable" resourcePath="opus-1.3/celt_headers.mk" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1350042475" name="opus_sources.mk" rcbsApplicability="disable" resourcePath="opus-1.3/opus_sources.mk" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.725688517" name="compile" rcbsApplicability="disable" resourcePath="opus-1.3/compile" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.69351660" name="missing" rcbsApplicability="disable" resourcePath="opus-1.3/missing" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.451096011" name="Makefile.mips" rcbsApplicability="disable" resourcePath="opus-1.3/Makefile.mips" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1342371733" name="Makefile.in" rcbsApplicability="disable" resourcePath="opus-1.3/Makefile.in" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.367470251" name="configure.ac" rcbsApplicability="disable" resourcePath="opus-1.3/configure.ac" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1944653362" name="opus_headers.mk" rcbsApplicability="disable" resourcePath="opus-1.3/opus_headers.mk" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.327057422" name="opus.pc.in" rcbsApplicability="disable" resourcePath="opus-1.3/opus.pc.in" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1723459924" name="opus-uninstalled.pc.in" rcbsApplicability="disable" resourcePath="opus-1.3/opus-uninstalled.pc.in" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1037215402" name="config.guess" rcbsApplicability="disable" resourcePath="opus-1.3/config.guess" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1720684484" name="silk_headers.mk" rcbsApplicability="disable" resourcePath="opus-1.3/silk_headers.mk" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1814455924" name="AUTHORS" rcbsApplicability="disable" resourcePath="opus-1.3/AUTHORS" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1885124776" name="config.sub" rcbsApplicability="disable" resourcePath="opus-1.3/config.sub" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.179107799" name="configure" rcbsApplicability="disable" resourcePath="opus-1.3/configure" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.642210175" name="install-sh" rcbsApplicability="disable" resourcePath="opus-1.3/install-sh" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1235903941" name="opus.m4" rcbsApplicability="disable" resourcePath="opus-1.3/opus.m4" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.661759382" name="package_version" rcbsApplicability="disable" resourcePath="opus-1.3/package_version" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1719779323" name="README" rcbsApplicability="disable" resourcePath="opus-1.3/README" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.141752767" name="test-driver" rcbsApplicability="disable" resourcePath="opus-1.3/test-driver" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1362445740" name="NEWS" rcbsApplicability="disable" resourcePath="opus-1.3/NEWS" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.462188048" name="aclocal.m4" rcbsApplicability="disable" resourcePath="opus-1.3/aclocal.m4" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1506501761" name="ChangeLog" rcbsApplicability="disable" resourcePath="opus-1.3/ChangeLog" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1296603011" name="depcomp" rcbsApplicability="disable" resourcePath="opus-1.3/depcomp" toolsToInvoke=""/>
 					<fileInfo id="com.atollic.truestudio.exe.debug.311825581.983937533" name="" rcbsApplicability="disable" resourcePath="nofile" toolsToInvoke="com.atollic.truestudio.exe.debug.toolchain.gcc.1836874447.1976695455">
 						<tool id="com.atollic.truestudio.exe.debug.toolchain.gcc.1836874447.1976695455" name="C Compiler" superClass="com.atollic.truestudio.exe.debug.toolchain.gcc.1836874447">
-							<inputType id="com.atollic.truestudio.gcc.input.1274347818" superClass="com.atollic.truestudio.gcc.input" />
+							<inputType id="com.atollic.truestudio.gcc.input.1274347818" superClass="com.atollic.truestudio.gcc.input"/>
 						</tool>
 					</fileInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers" />
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Src" />
-						<entry excluding="src/opus_demo.c|src/repacketizer_demo.c|src/opus_compare.c|silk/fixed/x86|silk/fixed/mips|silk/fixed/arm|silk/x86|silk/tests|silk/mips|silk/float|silk/arm|celt/opus_custom_demo.c|celt/x86|celt/tests|celt/mips|celt/arm|test-driver|silk_sources.mk|silk_headers.mk|README|package_version|opus-uninstalled.pc.in|opus.pc.in|opus.m4|opus_sources.mk|opus_headers.mk|NEWS|missing|Makefile.unix|Makefile.mips|Makefile.in|Makefile.am|ltmain.sh|install-sh|INSTALL|depcomp|COPYING|configure.ac|configure|config.sub|config.h.in|config.guess|compile|ChangeLog|celt_sources.mk|celt_headers.mk|AUTHORS|aclocal.m4|win32|tests|m4|doc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="opus-1.3" />
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="startup" />
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Src"/>
+						<entry excluding="src/opus_demo.c|src/repacketizer_demo.c|src/opus_compare.c|silk/fixed/x86|silk/fixed/mips|silk/fixed/arm|silk/x86|silk/tests|silk/mips|silk/float|silk/arm|celt/opus_custom_demo.c|celt/x86|celt/tests|celt/mips|celt/arm|test-driver|silk_sources.mk|silk_headers.mk|README|package_version|opus-uninstalled.pc.in|opus.pc.in|opus.m4|opus_sources.mk|opus_headers.mk|NEWS|missing|Makefile.unix|Makefile.mips|Makefile.in|Makefile.am|ltmain.sh|install-sh|INSTALL|depcomp|COPYING|configure.ac|configure|config.sub|config.h.in|config.guess|compile|ChangeLog|celt_sources.mk|celt_headers.mk|AUTHORS|aclocal.m4|win32|tests|m4|doc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="opus-1.3"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="startup"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
-			<storageModule moduleId="org.eclipse.cdt.core.externalSettings" />
-			<storageModule moduleId="org.eclipse.cdt.core.language.mapping" />
-			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings" />
+			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+			<storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
+			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 		</cconfiguration>
 		<cconfiguration id="com.atollic.truestudio.configuration.release.1518366166">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.atollic.truestudio.configuration.release.1518366166" moduleId="org.eclipse.cdt.core.settings" name="Release">
-				<externalSettings />
+				<externalSettings/>
 				<extensions>
-					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser" />
-					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser" />
-					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser" />
-					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser" />
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 				<configuration artifactExtension="elf" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="" id="com.atollic.truestudio.configuration.release.1518366166" name="Release" parent="com.atollic.truestudio.configuration.release" postbuildStep="arm-atollic-eabi-objcopy.exe -O ihex &quot;${BuildArtifactFileBaseName}.elf&quot; &quot;${BuildArtifactFileBaseName}.hex&quot;" prebuildStep="">
 					<folderInfo id="com.atollic.truestudio.configuration.release.1518366166.2031504340" name="/" resourcePath="">
 						<toolChain id="com.atollic.truestudio.exe.release.toolchain.683225115" name="Atollic ARM Tools" superClass="com.atollic.truestudio.exe.release.toolchain">
-							<option id="com.atollic.truestudio.general.runtimelib.652319601" name="Runtime Library" superClass="com.atollic.truestudio.general.runtimelib" useByScannerDiscovery="false" value="com.atollic.truestudio.ld.general.clib.small" valueType="enumerated" />
-							<option id="com.atollic.truestudio.toolchain_options.mcu.1300812738" name="Microcontroller" superClass="com.atollic.truestudio.toolchain_options.mcu" useByScannerDiscovery="false" value="STM32L496RG" valueType="string" />
-							<option id="com.atollic.truestudio.toolchain_options.vendor.610200515" name="Vendor name" superClass="com.atollic.truestudio.toolchain_options.vendor" useByScannerDiscovery="false" value="STMicroelectronics" valueType="string" />
-							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="com.atollic.truestudio.exe.release.toolchain.platform.2054752829" isAbstract="false" name="Release platform" superClass="com.atollic.truestudio.exe.release.toolchain.platform" />
-							<builder buildPath="${workspace_loc:/VoipPoint}/Release" customBuilderProperties="toolChainpathType=1|toolChainpathString=C:\\Program Files (x86)\\Atollic\\TrueSTUDIO for STM32 9.3.0\\ARMTools\\bin|" id="com.atollic.truestudio.mbs.builder1.1222194476" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="CDT Internal Builder" superClass="com.atollic.truestudio.mbs.builder1">
+							<option id="com.atollic.truestudio.general.runtimelib.652319601" name="Runtime Library" superClass="com.atollic.truestudio.general.runtimelib" useByScannerDiscovery="false" value="com.atollic.truestudio.ld.general.clib.small" valueType="enumerated"/>
+							<option id="com.atollic.truestudio.toolchain_options.mcu.1300812738" name="Microcontroller" superClass="com.atollic.truestudio.toolchain_options.mcu" useByScannerDiscovery="false" value="STM32L496RG" valueType="string"/>
+							<option id="com.atollic.truestudio.toolchain_options.vendor.610200515" name="Vendor name" superClass="com.atollic.truestudio.toolchain_options.vendor" useByScannerDiscovery="false" value="STMicroelectronics" valueType="string"/>
+							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="com.atollic.truestudio.exe.release.toolchain.platform.2054752829" isAbstract="false" name="Release platform" superClass="com.atollic.truestudio.exe.release.toolchain.platform"/>
+							<builder buildPath="${workspace_loc:/VoipPoint}/Release" customBuilderProperties="toolChainpathString=C:\\Program Files (x86)\\Atollic\\TrueSTUDIO for STM32 9.3.0\\ARMTools\\bin|toolChainpathType=1|" id="com.atollic.truestudio.mbs.builder1.1222194476" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="CDT Internal Builder" superClass="com.atollic.truestudio.mbs.builder1">
 								<outputEntries>
-									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="Release" />
+									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="Release"/>
 								</outputEntries>
 							</builder>
 							<tool command="arm-atollic-eabi-gcc -c" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG}${OUTPUT_PREFIX} ${OUTPUT} ${INPUTS}" id="com.atollic.truestudio.exe.release.toolchain.as.1545899283" name="Assembler" superClass="com.atollic.truestudio.exe.release.toolchain.as">
-								<option id="com.atollic.truestudio.common_options.target.endianess.1608144567" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.mcpu.286463162" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" useByScannerDiscovery="false" value="STM32L496RG" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.instr_set.2033833414" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated" />
-								<option id="com.atollic.truestudio.as.general.incpath.770237934" name="Include path" superClass="com.atollic.truestudio.as.general.incpath" useByScannerDiscovery="false" />
-								<option id="com.atollic.truestudio.gcc.symbols.defined.1670122205" name="Defined symbols" superClass="com.atollic.truestudio.gcc.symbols.defined" useByScannerDiscovery="false" />
-								<option id="com.atollic.truestudio.as.general.otherflags.51384659" name="Other options" superClass="com.atollic.truestudio.as.general.otherflags" useByScannerDiscovery="false" value="" valueType="string" />
-								<option id="com.atollic.truestudio.as.general.warnings.1324541152" name="Suppress warnings " superClass="com.atollic.truestudio.as.general.warnings" useByScannerDiscovery="false" value="true" valueType="boolean" />
-								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated" />
-								<inputType id="com.atollic.truestudio.as.input.374932590" name="Input" superClass="com.atollic.truestudio.as.input" />
+								<option id="com.atollic.truestudio.common_options.target.endianess.1608144567" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.mcpu.286463162" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" useByScannerDiscovery="false" value="STM32L496RG" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.instr_set.2033833414" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.as.general.incpath.770237934" name="Include path" superClass="com.atollic.truestudio.as.general.incpath" useByScannerDiscovery="false"/>
+								<option id="com.atollic.truestudio.gcc.symbols.defined.1670122205" name="Defined symbols" superClass="com.atollic.truestudio.gcc.symbols.defined" useByScannerDiscovery="false"/>
+								<option id="com.atollic.truestudio.as.general.otherflags.51384659" name="Other options" superClass="com.atollic.truestudio.as.general.otherflags" useByScannerDiscovery="false" value="" valueType="string"/>
+								<option id="com.atollic.truestudio.as.general.warnings.1324541152" name="Suppress warnings " superClass="com.atollic.truestudio.as.general.warnings" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
+								<inputType id="com.atollic.truestudio.as.input.374932590" name="Input" superClass="com.atollic.truestudio.as.input"/>
 							</tool>
 							<tool command="arm-atollic-eabi-gcc -c " commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG}${OUTPUT_PREFIX} ${OUTPUT} ${INPUTS}" id="com.atollic.truestudio.exe.release.toolchain.gcc.1836874447" name="C Compiler" superClass="com.atollic.truestudio.exe.release.toolchain.gcc">
 								<option id="com.atollic.truestudio.gcc.directories.select.330946435" name="Include path" superClass="com.atollic.truestudio.gcc.directories.select" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="../Inc" />
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/silk/fixed}&quot;" />
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/silk}&quot;" />
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/src}&quot;" />
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/celt}&quot;" />
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/include}&quot;" />
-									<listOptionValue builtIn="false" value="../Drivers/STM32L4xx_HAL_Driver/Inc" />
-									<listOptionValue builtIn="false" value="../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy" />
-									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32L4xx/Include" />
-									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include" />
+									<listOptionValue builtIn="false" value="../Inc"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/silk/fixed}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/silk}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/celt}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/opus-1.3/include}&quot;"/>
+									<listOptionValue builtIn="false" value="../Drivers/STM32L4xx_HAL_Driver/Inc"/>
+									<listOptionValue builtIn="false" value="../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy"/>
+									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32L4xx/Include"/>
+									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 								</option>
 								<option id="com.atollic.truestudio.gcc.symbols.defined.1670122205" name="Defined symbols" superClass="com.atollic.truestudio.gcc.symbols.defined" useByScannerDiscovery="false" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="__weak=__attribute__((weak))" />
-									<listOptionValue builtIn="false" value="HAVE_CONFIG_H" />
-									<listOptionValue builtIn="false" value="ARM_MATH_CM4" />
-									<listOptionValue builtIn="false" value="__FPU_PRESENT" />
-									<listOptionValue builtIn="false" value="__packed=__attribute__((__packed__))" />
-									<listOptionValue builtIn="false" value="USE_HAL_DRIVER" />
-									<listOptionValue builtIn="false" value="STM32L496xx" />
+									<listOptionValue builtIn="false" value="__weak=__attribute__((weak))"/>
+									<listOptionValue builtIn="false" value="HAVE_CONFIG_H"/>
+									<listOptionValue builtIn="false" value="ARM_MATH_CM4"/>
+									<listOptionValue builtIn="false" value="__FPU_PRESENT"/>
+									<listOptionValue builtIn="false" value="__packed=__attribute__((__packed__))"/>
+									<listOptionValue builtIn="false" value="USE_HAL_DRIVER"/>
+									<listOptionValue builtIn="false" value="STM32L496xx"/>
 								</option>
-								<option id="com.atollic.truestudio.common_options.target.endianess.1854274048" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.mcpu.191909026" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" useByScannerDiscovery="false" value="STM32L496RG" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.instr_set.1503159865" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated" />
-								<option id="com.atollic.truestudio.gcc.optimization.prep_garbage.586275206" name="Prepare dead code removal " superClass="com.atollic.truestudio.gcc.optimization.prep_garbage" useByScannerDiscovery="false" value="true" valueType="boolean" />
-								<option id="com.atollic.truestudio.gcc.optimization.prep_data.1044766448" name="Prepare dead data removal" superClass="com.atollic.truestudio.gcc.optimization.prep_data" useByScannerDiscovery="false" value="true" valueType="boolean" />
-								<option id="com.atollic.truestudio.gcc.misc.otherflags.895097519" name="Other options" superClass="com.atollic.truestudio.gcc.misc.otherflags" useByScannerDiscovery="false" value="" valueType="string" />
-								<option id="com.atollic.truestudio.exe.release.toolchain.gcc.optimization.level.1763412676" name="Optimization Level" superClass="com.atollic.truestudio.exe.release.toolchain.gcc.optimization.level" useByScannerDiscovery="false" value="com.atollic.truestudio.gcc.optimization.level.0s" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.interwork.1173495076" name="Mix ARM/Thumb" superClass="com.atollic.truestudio.common_options.target.interwork" useByScannerDiscovery="false" />
-								<option id="com.atollic.truestudio.gcc.optimization.no_strict_aliasing.435219028" name="No strict aliasing" superClass="com.atollic.truestudio.gcc.optimization.no_strict_aliasing" useByScannerDiscovery="false" value="false" valueType="boolean" />
-								<inputType id="com.atollic.truestudio.gcc.input.850396938" superClass="com.atollic.truestudio.gcc.input" />
+								<option id="com.atollic.truestudio.common_options.target.endianess.1854274048" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.mcpu.191909026" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" useByScannerDiscovery="false" value="STM32L496RG" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.instr_set.1503159865" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.gcc.optimization.prep_garbage.586275206" name="Prepare dead code removal " superClass="com.atollic.truestudio.gcc.optimization.prep_garbage" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+								<option id="com.atollic.truestudio.gcc.optimization.prep_data.1044766448" name="Prepare dead data removal" superClass="com.atollic.truestudio.gcc.optimization.prep_data" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+								<option id="com.atollic.truestudio.gcc.misc.otherflags.895097519" name="Other options" superClass="com.atollic.truestudio.gcc.misc.otherflags" useByScannerDiscovery="false" value="" valueType="string"/>
+								<option id="com.atollic.truestudio.exe.release.toolchain.gcc.optimization.level.1763412676" name="Optimization Level" superClass="com.atollic.truestudio.exe.release.toolchain.gcc.optimization.level" useByScannerDiscovery="false" value="com.atollic.truestudio.gcc.optimization.level.0s" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.interwork.1173495076" name="Mix ARM/Thumb" superClass="com.atollic.truestudio.common_options.target.interwork" useByScannerDiscovery="false"/>
+								<option id="com.atollic.truestudio.gcc.optimization.no_strict_aliasing.435219028" name="No strict aliasing" superClass="com.atollic.truestudio.gcc.optimization.no_strict_aliasing" useByScannerDiscovery="false" value="false" valueType="boolean"/>
+								<inputType id="com.atollic.truestudio.gcc.input.850396938" superClass="com.atollic.truestudio.gcc.input"/>
 							</tool>
 							<tool id="com.atollic.truestudio.exe.release.toolchain.ld.1444973427" name="C Linker" superClass="com.atollic.truestudio.exe.release.toolchain.ld">
-								<option id="com.atollic.truestudio.common_options.target.endianess.662778612" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.mcpu.35700531" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" useByScannerDiscovery="false" value="STM32L496RG" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.instr_set.566688004" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated" />
-								<option id="com.atollic.truestudio.ld.general.scriptfile.1350476438" name="Linker script" superClass="com.atollic.truestudio.ld.general.scriptfile" useByScannerDiscovery="false" value="../STM32L496RG_FLASH.ld" valueType="string" />
-								<option id="com.atollic.truestudio.ld.optimization.do_garbage.1816004776" name="Dead code removal " superClass="com.atollic.truestudio.ld.optimization.do_garbage" useByScannerDiscovery="false" value="true" valueType="boolean" />
-								<option id="com.atollic.truestudio.ld.libraries.list.848669414" name="Libraries" superClass="com.atollic.truestudio.ld.libraries.list" useByScannerDiscovery="false" />
-								<option id="com.atollic.truestudio.ld.libraries.searchpath.1273009461" name="Library search path" superClass="com.atollic.truestudio.ld.libraries.searchpath" useByScannerDiscovery="false" />
-								<option id="com.atollic.truestudio.ld.misc.linkerflags.1948405714" name="Other options" superClass="com.atollic.truestudio.ld.misc.linkerflags" useByScannerDiscovery="false" value="" valueType="string" />
-								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated" />
+								<option id="com.atollic.truestudio.common_options.target.endianess.662778612" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.mcpu.35700531" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" useByScannerDiscovery="false" value="STM32L496RG" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.instr_set.566688004" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.ld.general.scriptfile.1350476438" name="Linker script" superClass="com.atollic.truestudio.ld.general.scriptfile" useByScannerDiscovery="false" value="../STM32L496RG_FLASH.ld" valueType="string"/>
+								<option id="com.atollic.truestudio.ld.optimization.do_garbage.1816004776" name="Dead code removal " superClass="com.atollic.truestudio.ld.optimization.do_garbage" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+								<option id="com.atollic.truestudio.ld.libraries.list.848669414" name="Libraries" superClass="com.atollic.truestudio.ld.libraries.list" useByScannerDiscovery="false"/>
+								<option id="com.atollic.truestudio.ld.libraries.searchpath.1273009461" name="Library search path" superClass="com.atollic.truestudio.ld.libraries.searchpath" useByScannerDiscovery="false"/>
+								<option id="com.atollic.truestudio.ld.misc.linkerflags.1948405714" name="Other options" superClass="com.atollic.truestudio.ld.misc.linkerflags" useByScannerDiscovery="false" value="" valueType="string"/>
+								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
 								<inputType id="com.atollic.truestudio.ld.input.1372975870" name="Input" superClass="com.atollic.truestudio.ld.input">
-									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)" />
-									<additionalInput kind="additionalinput" paths="$(LIBS)" />
+									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
+									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
 								</inputType>
 							</tool>
 							<tool id="com.atollic.truestudio.exe.release.toolchain.gpp.981298185" name="C++ Compiler" superClass="com.atollic.truestudio.exe.release.toolchain.gpp">
 								<option id="com.atollic.truestudio.gpp.directories.select.330946435" name="Include path" superClass="com.atollic.truestudio.gpp.directories.select" valueType="includePath">
-									<listOptionValue builtIn="false" value="../Inc" />
-									<listOptionValue builtIn="false" value="../Drivers/STM32L4xx_HAL_Driver/Inc" />
-									<listOptionValue builtIn="false" value="../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy" />
-									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32L4xx/Include" />
-									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include" />
+									<listOptionValue builtIn="false" value="../Inc"/>
+									<listOptionValue builtIn="false" value="../Drivers/STM32L4xx_HAL_Driver/Inc"/>
+									<listOptionValue builtIn="false" value="../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy"/>
+									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32L4xx/Include"/>
+									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 								</option>
 								<option id="com.atollic.truestudio.gpp.symbols.defined.1619552487" name="Defined symbols" superClass="com.atollic.truestudio.gpp.symbols.defined" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="__weak=__attribute__((weak))" />
-									<listOptionValue builtIn="false" value="__packed=__attribute__((__packed__))" />
-									<listOptionValue builtIn="false" value="USE_HAL_DRIVER" />
-									<listOptionValue builtIn="false" value="STM32L496xx" />
+									<listOptionValue builtIn="false" value="__weak=__attribute__((weak))"/>
+									<listOptionValue builtIn="false" value="__packed=__attribute__((__packed__))"/>
+									<listOptionValue builtIn="false" value="USE_HAL_DRIVER"/>
+									<listOptionValue builtIn="false" value="STM32L496xx"/>
 								</option>
-								<option id="com.atollic.truestudio.common_options.target.endianess.176262651" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.mcpu.630487808" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" value="STM32L496RG" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.instr_set.227324580" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated" />
-								<option id="com.atollic.truestudio.gpp.optimization.prep_garbage.26464025" name="Prepare dead code removal" superClass="com.atollic.truestudio.gpp.optimization.prep_garbage" value="true" valueType="boolean" />
-								<option id="com.atollic.truestudio.gpp.optimization.fno_rtti.1009504734" name="Disable RTTI" superClass="com.atollic.truestudio.gpp.optimization.fno_rtti" />
-								<option id="com.atollic.truestudio.gpp.optimization.fno_exceptions.342217745" name="Disable exception handling" superClass="com.atollic.truestudio.gpp.optimization.fno_exceptions" />
-								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated" />
+								<option id="com.atollic.truestudio.common_options.target.endianess.176262651" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.mcpu.630487808" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" value="STM32L496RG" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.instr_set.227324580" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.gpp.optimization.prep_garbage.26464025" name="Prepare dead code removal" superClass="com.atollic.truestudio.gpp.optimization.prep_garbage" value="true" valueType="boolean"/>
+								<option id="com.atollic.truestudio.gpp.optimization.fno_rtti.1009504734" name="Disable RTTI" superClass="com.atollic.truestudio.gpp.optimization.fno_rtti"/>
+								<option id="com.atollic.truestudio.gpp.optimization.fno_exceptions.342217745" name="Disable exception handling" superClass="com.atollic.truestudio.gpp.optimization.fno_exceptions"/>
+								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
 							</tool>
 							<tool id="com.atollic.truestudio.exe.release.toolchain.ldcc.428260" name="C++ Linker" superClass="com.atollic.truestudio.exe.release.toolchain.ldcc">
-								<option id="com.atollic.truestudio.common_options.target.endianess.2051741049" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.mcpu.1701726850" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" value="STM32L496RG" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.instr_set.1600237525" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated" />
-								<option id="com.atollic.truestudio.ldcc.general.scriptfile.561304432" name="Linker script" superClass="com.atollic.truestudio.ldcc.general.scriptfile" value="../STM32L496RG_FLASH.ld" valueType="string" />
-								<option id="com.atollic.truestudio.ldcc.optimization.do_garbage.956844137" name="Dead code removal" superClass="com.atollic.truestudio.ldcc.optimization.do_garbage" value="true" valueType="boolean" />
-								<option id="com.atollic.truestudio.ldcc.libraries.list.848669414" name="Libraries" superClass="com.atollic.truestudio.ldcc.libraries.list" />
-								<option id="com.atollic.truestudio.ldcc.libraries.searchpath.1273009461" name="Library search path" superClass="com.atollic.truestudio.ldcc.libraries.searchpath" />
-								<option id="com.atollic.truestudio.ldcc.misc.linkerflags.1948405714" name="Other options" superClass="com.atollic.truestudio.ldcc.misc.linkerflags" value="" valueType="string" />
-								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated" />
-								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated" />
+								<option id="com.atollic.truestudio.common_options.target.endianess.2051741049" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.mcpu.1701726850" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" value="STM32L496RG" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.instr_set.1600237525" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.ldcc.general.scriptfile.561304432" name="Linker script" superClass="com.atollic.truestudio.ldcc.general.scriptfile" value="../STM32L496RG_FLASH.ld" valueType="string"/>
+								<option id="com.atollic.truestudio.ldcc.optimization.do_garbage.956844137" name="Dead code removal" superClass="com.atollic.truestudio.ldcc.optimization.do_garbage" value="true" valueType="boolean"/>
+								<option id="com.atollic.truestudio.ldcc.libraries.list.848669414" name="Libraries" superClass="com.atollic.truestudio.ldcc.libraries.list"/>
+								<option id="com.atollic.truestudio.ldcc.libraries.searchpath.1273009461" name="Library search path" superClass="com.atollic.truestudio.ldcc.libraries.searchpath"/>
+								<option id="com.atollic.truestudio.ldcc.misc.linkerflags.1948405714" name="Other options" superClass="com.atollic.truestudio.ldcc.misc.linkerflags" value="" valueType="string"/>
+								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
 							</tool>
 							<tool id="com.atollic.truestudio.exe.release.toolchain.secoutput.839033486" name="Other" superClass="com.atollic.truestudio.exe.release.toolchain.secoutput">
-								<option id="com.atollic.truestudio.secoutput.general.convert.944683862" name="Convert build output" superClass="com.atollic.truestudio.secoutput.general.convert" useByScannerDiscovery="false" value="true" valueType="boolean" />
+								<option id="com.atollic.truestudio.secoutput.general.convert.944683862" name="Convert build output" superClass="com.atollic.truestudio.secoutput.general.convert" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 							</tool>
-							<tool id="com.atollic.truestudio.ar.base.1459911695" name="Archiver" superClass="com.atollic.truestudio.ar.base" />
+							<tool id="com.atollic.truestudio.ar.base.1459911695" name="Archiver" superClass="com.atollic.truestudio.ar.base"/>
 						</toolChain>
 					</folderInfo>
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.622974002" name="INSTALL" rcbsApplicability="disable" resourcePath="opus-1.3/INSTALL" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1704430529" name="celt_sources.mk" rcbsApplicability="disable" resourcePath="opus-1.3/celt_sources.mk" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.106473644" name="config.h.in" rcbsApplicability="disable" resourcePath="opus-1.3/config.h.in" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1077931429" name="silk_sources.mk" rcbsApplicability="disable" resourcePath="opus-1.3/silk_sources.mk" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1242241294" name="Makefile.am" rcbsApplicability="disable" resourcePath="opus-1.3/Makefile.am" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1924469009" name="COPYING" rcbsApplicability="disable" resourcePath="opus-1.3/COPYING" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1228865818" name="ltmain.sh" rcbsApplicability="disable" resourcePath="opus-1.3/ltmain.sh" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1561237598" name="Makefile.unix" rcbsApplicability="disable" resourcePath="opus-1.3/Makefile.unix" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1751526365" name="celt_headers.mk" rcbsApplicability="disable" resourcePath="opus-1.3/celt_headers.mk" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1368726338" name="opus_sources.mk" rcbsApplicability="disable" resourcePath="opus-1.3/opus_sources.mk" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1407614630" name="compile" rcbsApplicability="disable" resourcePath="opus-1.3/compile" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.527019863" name="missing" rcbsApplicability="disable" resourcePath="opus-1.3/missing" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1415720409" name="Makefile.mips" rcbsApplicability="disable" resourcePath="opus-1.3/Makefile.mips" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1983820328" name="Makefile.in" rcbsApplicability="disable" resourcePath="opus-1.3/Makefile.in" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.88205886" name="configure.ac" rcbsApplicability="disable" resourcePath="opus-1.3/configure.ac" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1558500337" name="opus_headers.mk" rcbsApplicability="disable" resourcePath="opus-1.3/opus_headers.mk" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.310920125" name="opus.pc.in" rcbsApplicability="disable" resourcePath="opus-1.3/opus.pc.in" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.722173201" name="opus-uninstalled.pc.in" rcbsApplicability="disable" resourcePath="opus-1.3/opus-uninstalled.pc.in" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.554047062" name="config.guess" rcbsApplicability="disable" resourcePath="opus-1.3/config.guess" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.905267690" name="silk_headers.mk" rcbsApplicability="disable" resourcePath="opus-1.3/silk_headers.mk" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1565969177" name="AUTHORS" rcbsApplicability="disable" resourcePath="opus-1.3/AUTHORS" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1830533045" name="config.sub" rcbsApplicability="disable" resourcePath="opus-1.3/config.sub" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1291817248" name="configure" rcbsApplicability="disable" resourcePath="opus-1.3/configure" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1623823649" name="install-sh" rcbsApplicability="disable" resourcePath="opus-1.3/install-sh" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1656220162" name="opus.m4" rcbsApplicability="disable" resourcePath="opus-1.3/opus.m4" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.41962574" name="package_version" rcbsApplicability="disable" resourcePath="opus-1.3/package_version" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1014652038" name="README" rcbsApplicability="disable" resourcePath="opus-1.3/README" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.2096285229" name="test-driver" rcbsApplicability="disable" resourcePath="opus-1.3/test-driver" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.346958757" name="NEWS" rcbsApplicability="disable" resourcePath="opus-1.3/NEWS" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1800015410" name="aclocal.m4" rcbsApplicability="disable" resourcePath="opus-1.3/aclocal.m4" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1738673227" name="ChangeLog" rcbsApplicability="disable" resourcePath="opus-1.3/ChangeLog" toolsToInvoke="" />
-					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.587341995" name="depcomp" rcbsApplicability="disable" resourcePath="opus-1.3/depcomp" toolsToInvoke="" />
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.622974002" name="INSTALL" rcbsApplicability="disable" resourcePath="opus-1.3/INSTALL" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1704430529" name="celt_sources.mk" rcbsApplicability="disable" resourcePath="opus-1.3/celt_sources.mk" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.106473644" name="config.h.in" rcbsApplicability="disable" resourcePath="opus-1.3/config.h.in" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1077931429" name="silk_sources.mk" rcbsApplicability="disable" resourcePath="opus-1.3/silk_sources.mk" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1242241294" name="Makefile.am" rcbsApplicability="disable" resourcePath="opus-1.3/Makefile.am" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1924469009" name="COPYING" rcbsApplicability="disable" resourcePath="opus-1.3/COPYING" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1228865818" name="ltmain.sh" rcbsApplicability="disable" resourcePath="opus-1.3/ltmain.sh" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1561237598" name="Makefile.unix" rcbsApplicability="disable" resourcePath="opus-1.3/Makefile.unix" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1751526365" name="celt_headers.mk" rcbsApplicability="disable" resourcePath="opus-1.3/celt_headers.mk" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1368726338" name="opus_sources.mk" rcbsApplicability="disable" resourcePath="opus-1.3/opus_sources.mk" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1407614630" name="compile" rcbsApplicability="disable" resourcePath="opus-1.3/compile" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.527019863" name="missing" rcbsApplicability="disable" resourcePath="opus-1.3/missing" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1415720409" name="Makefile.mips" rcbsApplicability="disable" resourcePath="opus-1.3/Makefile.mips" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1983820328" name="Makefile.in" rcbsApplicability="disable" resourcePath="opus-1.3/Makefile.in" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.88205886" name="configure.ac" rcbsApplicability="disable" resourcePath="opus-1.3/configure.ac" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1558500337" name="opus_headers.mk" rcbsApplicability="disable" resourcePath="opus-1.3/opus_headers.mk" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.310920125" name="opus.pc.in" rcbsApplicability="disable" resourcePath="opus-1.3/opus.pc.in" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.722173201" name="opus-uninstalled.pc.in" rcbsApplicability="disable" resourcePath="opus-1.3/opus-uninstalled.pc.in" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.554047062" name="config.guess" rcbsApplicability="disable" resourcePath="opus-1.3/config.guess" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.905267690" name="silk_headers.mk" rcbsApplicability="disable" resourcePath="opus-1.3/silk_headers.mk" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1565969177" name="AUTHORS" rcbsApplicability="disable" resourcePath="opus-1.3/AUTHORS" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1830533045" name="config.sub" rcbsApplicability="disable" resourcePath="opus-1.3/config.sub" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1291817248" name="configure" rcbsApplicability="disable" resourcePath="opus-1.3/configure" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1623823649" name="install-sh" rcbsApplicability="disable" resourcePath="opus-1.3/install-sh" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1656220162" name="opus.m4" rcbsApplicability="disable" resourcePath="opus-1.3/opus.m4" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.41962574" name="package_version" rcbsApplicability="disable" resourcePath="opus-1.3/package_version" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1014652038" name="README" rcbsApplicability="disable" resourcePath="opus-1.3/README" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.2096285229" name="test-driver" rcbsApplicability="disable" resourcePath="opus-1.3/test-driver" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.346958757" name="NEWS" rcbsApplicability="disable" resourcePath="opus-1.3/NEWS" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1800015410" name="aclocal.m4" rcbsApplicability="disable" resourcePath="opus-1.3/aclocal.m4" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1738673227" name="ChangeLog" rcbsApplicability="disable" resourcePath="opus-1.3/ChangeLog" toolsToInvoke=""/>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.587341995" name="depcomp" rcbsApplicability="disable" resourcePath="opus-1.3/depcomp" toolsToInvoke=""/>
 					<fileInfo id="com.atollic.truestudio.exe.release.311825581.983937533" name="" rcbsApplicability="disable" resourcePath="nofile" toolsToInvoke="com.atollic.truestudio.exe.release.toolchain.gcc.1836874447.1976695455">
 						<tool id="com.atollic.truestudio.exe.release.toolchain.gcc.1836874447.1976695455" name="C Compiler" superClass="com.atollic.truestudio.exe.release.toolchain.gcc.1836874447">
-							<inputType id="com.atollic.truestudio.gcc.input.1274347818" superClass="com.atollic.truestudio.gcc.input" />
+							<inputType id="com.atollic.truestudio.gcc.input.1274347818" superClass="com.atollic.truestudio.gcc.input"/>
 						</tool>
 					</fileInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers" />
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Src" />
-						<entry excluding="src/opus_demo.c|src/repacketizer_demo.c|src/opus_compare.c|silk/fixed/x86|silk/fixed/mips|silk/fixed/arm|silk/x86|silk/tests|silk/mips|silk/float|silk/arm|celt/opus_custom_demo.c|celt/x86|celt/tests|celt/mips|celt/arm|test-driver|silk_sources.mk|silk_headers.mk|README|package_version|opus-uninstalled.pc.in|opus.pc.in|opus.m4|opus_sources.mk|opus_headers.mk|NEWS|missing|Makefile.unix|Makefile.mips|Makefile.in|Makefile.am|ltmain.sh|install-sh|INSTALL|depcomp|COPYING|configure.ac|configure|config.sub|config.h.in|config.guess|compile|ChangeLog|celt_sources.mk|celt_headers.mk|AUTHORS|aclocal.m4|win32|tests|m4|doc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="opus-1.3" />
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="startup" />
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Src"/>
+						<entry excluding="src/opus_demo.c|src/repacketizer_demo.c|src/opus_compare.c|silk/fixed/x86|silk/fixed/mips|silk/fixed/arm|silk/x86|silk/tests|silk/mips|silk/float|silk/arm|celt/opus_custom_demo.c|celt/x86|celt/tests|celt/mips|celt/arm|test-driver|silk_sources.mk|silk_headers.mk|README|package_version|opus-uninstalled.pc.in|opus.pc.in|opus.m4|opus_sources.mk|opus_headers.mk|NEWS|missing|Makefile.unix|Makefile.mips|Makefile.in|Makefile.am|ltmain.sh|install-sh|INSTALL|depcomp|COPYING|configure.ac|configure|config.sub|config.h.in|config.guess|compile|ChangeLog|celt_sources.mk|celt_headers.mk|AUTHORS|aclocal.m4|win32|tests|m4|doc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="opus-1.3"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="startup"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
-			<storageModule moduleId="org.eclipse.cdt.core.externalSettings" />
-			<storageModule moduleId="org.eclipse.cdt.core.language.mapping" />
-			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings" />
+			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+			<storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
+			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-		<project id="VoipPoint.com.atollic.truestudio.exe.1549124020" name="Executable" projectType="com.atollic.truestudio.exe" />
+		<project id="VoipPoint.com.atollic.truestudio.exe.1549124020" name="Executable" projectType="com.atollic.truestudio.exe"/>
 	</storageModule>
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="Debug">
-			<resource resourceType="PROJECT" workspacePath="VoipPoint" />
+			<resource resourceType="PROJECT" workspacePath="VoipPoint"/>
 		</configuration>
 		<configuration configurationName="Release">
-			<resource resourceType="PROJECT" workspacePath="/VoipPoint" />
+			<resource resourceType="PROJECT" workspacePath="/VoipPoint"/>
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="" />
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerFileProfile">
 			<buildOutputProvider>
-				<openAction enabled="true" filePath="" />
-				<parser enabled="true" />
+				<openAction enabled="true" filePath=""/>
+				<parser enabled="true"/>
 			</buildOutputProvider>
 			<scannerInfoProvider id="makefileGenerator">
-				<runAction arguments="-f ${project_name}_scd.mk" command="make" useDefault="true" />
-				<parser enabled="true" />
+				<runAction arguments="-f ${project_name}_scd.mk" command="make" useDefault="true"/>
+				<parser enabled="true"/>
 			</scannerInfoProvider>
 		</profile>
 		<scannerConfigBuildInfo instanceId="com.atollic.truestudio.exe.debug.1518366166;com.atollic.truestudio.exe.debug.1518366166.303277065;com.atollic.truestudio.exe.debug.toolchain.gcc.393815702;com.atollic.truestudio.gcc.input.1088835115">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC" />
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
 			<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerFileProfile">
 				<buildOutputProvider>
-					<openAction enabled="true" filePath="" />
-					<parser enabled="true" />
+					<openAction enabled="true" filePath=""/>
+					<parser enabled="true"/>
 				</buildOutputProvider>
 				<scannerInfoProvider id="makefileGenerator">
-					<runAction arguments="-f ${project_name}_scd.mk" command="make" useDefault="true" />
-					<parser enabled="true" />
+					<runAction arguments="-f ${project_name}_scd.mk" command="make" useDefault="true"/>
+					<parser enabled="true"/>
 				</scannerInfoProvider>
 			</profile>
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="com.atollic.truestudio.exe.debug.1518366166;com.atollic.truestudio.exe.debug.1518366166.;com.atollic.truestudio.exe.debug.toolchain.gcc.1836874447;com.atollic.truestudio.gcc.input.850396938">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC" />
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
 			<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerFileProfile">
 				<buildOutputProvider>
-					<openAction enabled="true" filePath="" />
-					<parser enabled="true" />
+					<openAction enabled="true" filePath=""/>
+					<parser enabled="true"/>
 				</buildOutputProvider>
 				<scannerInfoProvider id="makefileGenerator">
-					<runAction arguments="-f ${project_name}_scd.mk" command="make" useDefault="true" />
-					<parser enabled="true" />
+					<runAction arguments="-f ${project_name}_scd.mk" command="make" useDefault="true"/>
+					<parser enabled="true"/>
 				</scannerInfoProvider>
 			</profile>
 		</scannerConfigBuildInfo>
 	</storageModule>
-	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders" />
-	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets" />
+	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 </cproject>
