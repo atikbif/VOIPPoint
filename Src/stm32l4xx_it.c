@@ -60,6 +60,7 @@ extern uint8_t rx1_buf[UART_BUF_SISE];
 extern uint8_t tx1_buf[UART_BUF_SISE];
 extern uint16_t rx1_cnt;
 extern uint16_t rx1_tmr;
+extern uint16_t packet_tmr;
 
 /* USER CODE END 0 */
 
@@ -197,6 +198,7 @@ void SysTick_Handler(void)
   static uint8_t state = 0;
   can_write_from_stack();
   i++;
+  packet_tmr++;
   if(i>=100) {
 	  i = 0;
 	  switch(state) {

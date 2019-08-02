@@ -87,18 +87,33 @@ char microphone_encoded_data[2][256];
 int8_t encoded_length = 0;
 int16_t	audio_stream[1024];
 
+#define OPUS_PACKET_MAX_LENGTH	64
+
 static CAN_TxHeaderTypeDef   TxHeader;
 static uint32_t              TxMailbox1=0;
 static uint32_t              TxMailbox2=0;
 static uint8_t               TxData[8];
 static CAN_RxHeaderTypeDef   RxHeader;
 static uint8_t               RxData[8];
-static uint8_t				 can_frame[40];
-static uint8_t				 can_frame_id[256][40];
+static uint8_t				 can_frame[OPUS_PACKET_MAX_LENGTH];
+//static uint8_t				 can_frame_id[256][40];
+
+
+#define		UNKNOWN_TYPE	0
+#define		PC_TO_ALL		1
+#define		PC_TO_GROUP		2
+#define		PC_TO_POINT		3
+#define		POINT_TO_ALL	4
+#define		POINT_TO_PC		5
+
+static uint8_t 				 can_priority_frame[OPUS_PACKET_MAX_LENGTH];
+static uint32_t				 can_caught_id = 0;
 uint16_t can_tmr = 0;
+uint8_t group_id = 1;
 unsigned short device_id = 1;
 unsigned short gate_id = 0xFE;
 unsigned short point_to_point_tmr = 0x00;
+uint16_t packet_tmr = 0;
 unsigned char to_id = 0xFF;
 uint8_t can_pckt_length = 0;
 uint16_t p_cnt = 0;
@@ -123,16 +138,124 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+typedef struct
+{
+ uint32_t param: 8;
+ uint32_t cmd: 4;
+ uint32_t group_addr: 7;
+ uint32_t point_addr: 7;
+ uint32_t type: 3;
+ uint32_t unused_bits : 3;
+} id_field;
+
+
+
+uint8_t static check_id_priority(uint32_t packet_id) {
+	id_field *input_id = (id_field*)(&packet_id);
+	id_field *cur_id = (id_field*)(&can_caught_id);
+	if(input_id->type==POINT_TO_PC) return 0; // точка компьютер игнорируем
+	if(input_id->type==PC_TO_ALL) { // компьютер ко всем
+		*cur_id = *input_id;
+		return 1;
+	}
+	if(input_id->type==PC_TO_POINT) { // компьютер точка
+		if((input_id->group_addr == group_id) && (input_id->point_addr == device_id)) { //совпадает адрес группы и адрес точки
+			*cur_id = *input_id;
+			return 1;
+		}
+		return 0;
+	}
+	if(input_id->type==PC_TO_GROUP) { // компьютер группа
+		if(input_id->group_addr == group_id) { //совпадает адрес группы
+			*cur_id = *input_id;
+			return 1;
+		}
+		return 0;
+	}
+	if(input_id->type==POINT_TO_ALL) { // точка все
+		if(cur_id->type==UNKNOWN_TYPE) {	// пакеты не захвачены
+			*cur_id = *input_id;
+			return 1;
+		}
+		if(cur_id->type!=PC_TO_ALL && cur_id->type!=PC_TO_GROUP && cur_id->type!=PC_TO_POINT)  {
+			// ранее захваченный источник
+			if(cur_id->group_addr == input_id->group_addr && cur_id->point_addr == input_id->point_addr) {
+				*cur_id = *input_id;
+				return 1;
+			}
+			// активный пакет не из родной группы, новый запрос из родной группы, перехватить
+			if(cur_id->group_addr != group_id && input_id->group_addr == group_id) {
+				*cur_id = *input_id;
+				return 1;
+
+			}
+		}
+		return 0;
+	}
+	return 0;
+}
+
+static void check_can_rx(uint8_t can_num) {
+	CAN_HandleTypeDef *hcan;
+	uint8_t i = 0;
+	uint8_t j = 0;
+	uint8_t cur_num = 0;
+	uint8_t cnt = 0;
+	tx_stack_data packet;
+	id_field *p_id;
+	if(can_num==1) hcan = &hcan1; else hcan = &hcan2;
+	if(HAL_CAN_GetRxFifoFillLevel(hcan, CAN_RX_FIFO0)) {
+		if(HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK) {
+			p_id = (id_field*)(&(RxHeader.ExtId));
+			if(p_id->cmd==1) { // аудиопоток
+				if(check_id_priority(RxHeader.ExtId)) {
+					packet_tmr = 0;
+					cur_num = p_id->param & 0x0F;
+					cnt = (p_id->param & 0xFF)>> 4;
+					if(cur_num) {
+						if(cur_num==cnt) {
+						  HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+						  if(p_id->type==POINT_TO_ALL) { // точка все
+							  j = (cur_num-1)*8;
+							  for(i=0;i<RxHeader.DLC;i++) {
+								  if(j+i<OPUS_PACKET_MAX_LENGTH) can_priority_frame[j+i]=RxData[i];
+							  }
+							  can_pckt_length = (cnt-1)*8+RxHeader.DLC;
+							  if(can_pckt_length>OPUS_PACKET_MAX_LENGTH) can_pckt_length = OPUS_PACKET_MAX_LENGTH;
+							  for(i=0;i<can_pckt_length;i++) {
+								  can_frame[i]=can_priority_frame[i];
+							  }
+							  add_can_frame(&can_frame[0],can_pckt_length);
+						  }
+						}else {
+						  j = (cur_num-1)*8;
+						  for(i=0;i<8;i++) { if(j+i<OPUS_PACKET_MAX_LENGTH) can_priority_frame[j+i]=RxData[i]; }
+						}
+					}
+				}
+			}
+		}
+		if(!(p_id->point_addr == device_id && p_id->group_addr == group_id)) {
+			packet.id = RxHeader.ExtId;
+			packet.priority = LOW_PACKET_PRIORITY;
+			packet.length = RxHeader.DLC;
+			for(i=0;i<packet.length;++i) packet.data[i] = RxData[i];
+			if(can_num==1)	add_tx_can_packet(&can2_tx_stack,&packet);
+			else add_tx_can_packet(&can1_tx_stack,&packet);
+		}
+	}
+}
+
 void can_write_from_stack() {
 	tx_stack_data packet;
 	uint8_t i = 0;
 	while(HAL_CAN_GetTxMailboxesFreeLevel(&hcan1)!=0) {
 
 		if(get_tx_can_packet(&can1_tx_stack,&packet)) {
-			TxHeader.StdId = device_id;
-			TxHeader.ExtId = 0;
+			TxHeader.StdId = 0;
+			TxHeader.ExtId = packet.id;
 			TxHeader.RTR = CAN_RTR_DATA;
-			TxHeader.IDE = CAN_ID_STD;
+			TxHeader.IDE = CAN_ID_EXT;
 			TxHeader.TransmitGlobalTime = DISABLE;
 			TxHeader.DLC = packet.length;
 			for(i=0;i<packet.length;++i) TxData[i] = packet.data[i];
@@ -141,10 +264,11 @@ void can_write_from_stack() {
 	}
 	while(HAL_CAN_GetTxMailboxesFreeLevel(&hcan2)!=0) {
 		if(get_tx_can_packet(&can2_tx_stack,&packet)) {
-			TxHeader.StdId = device_id;
-			TxHeader.ExtId = 0;
+			TxHeader.IDE = CAN_ID_EXT;
+			TxHeader.StdId = 0;
+			TxHeader.ExtId = packet.id;
 			TxHeader.RTR = CAN_RTR_DATA;
-			TxHeader.IDE = CAN_ID_STD;
+			TxHeader.IDE = CAN_ID_EXT;
 			TxHeader.TransmitGlobalTime = DISABLE;
 			TxHeader.DLC = packet.length;
 			for(i=0;i<packet.length;++i) TxData[i] = packet.data[i];
@@ -186,39 +310,37 @@ static void send_full_frame(uint8_t len, uint8_t *ptr) {
 	uint8_t i=len;
 	uint8_t cur_pckt = 1;
 	uint8_t pckt_cnt = 0;
-	//uint16_t wait_delay = 0;
-
 	tx_stack_data packet;
+	id_field *p_id = (id_field*)(&packet.id);
 
 	while(i) {
 		pckt_cnt++;
-		if(i<=6) {i=0;break;}
-		else i-=7;
-		if(i==0) pckt_cnt++;
+		if(i<=8) {i=0;break;}
+		i-=8;
 	}
 	i=1;
-
-
 	while(cur_pckt<=pckt_cnt) {
-		packet.id = device_id;
+		p_id->unused_bits = 0;
+		p_id->type = POINT_TO_ALL;
+		p_id->point_addr = device_id;
+		p_id->group_addr = group_id;
+		p_id->cmd = 1;
+		p_id->param = (cur_pckt&0x0F)|((pckt_cnt&0x0F)<<4);
 		packet.priority = LOW_PACKET_PRIORITY;
 		if(cur_pckt==pckt_cnt) { // last packet
-			packet.length = 2+len;
-			packet.data[0] = (cur_pckt&0x0F)|((pckt_cnt&0x0F)<<4);
-			packet.data[1] = to_id;
-			for(i=0;i<len;i++) packet.data[i+2] = ptr[(cur_pckt-1)*7+i];
+			packet.length = len;
+			for(i=0;i<len;i++) packet.data[i] = ptr[(cur_pckt-1)*8+i];
 			add_tx_can_packet(&can1_tx_stack,&packet);
 			add_tx_can_packet(&can2_tx_stack,&packet);
 			cur_pckt++;
 			len=0;
 		}else {
 			packet.length = 8;
-			packet.data[0] = (cur_pckt&0x0F)|((pckt_cnt&0x0F)<<4);
-			for(i=0;i<7;i++) packet.data[i+1] = ptr[(cur_pckt-1)*7+i];
+			for(i=0;i<8;i++) packet.data[i] = ptr[(cur_pckt-1)*8+i];
 			add_tx_can_packet(&can1_tx_stack,&packet);
 			add_tx_can_packet(&can2_tx_stack,&packet);
 			cur_pckt++;
-			len-=7;
+			len-=8;
 		}
 	}
 }
@@ -296,7 +418,7 @@ static void convert(uint8_t num) {
 	static int16_t tmp_frame[FRAME_SIZE];
 	//static uint32_t wav_offset=0;
 	uint16_t i = 0;
-	float32_t k = 0.04;
+	float32_t k = 0.2;//0.04;
 	if(get_audio_frame(tmp_frame)==0) {
 		for(i=0;i<FRAME_SIZE;i++) tmp_frame[i] = 0;
 	}
@@ -411,6 +533,10 @@ int main(void)
 	  decode_work();
 	  can_work();
 	  uart1_scan();
+	  if(packet_tmr>=500) {
+		  packet_tmr=0;
+		  can_caught_id = 0;
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -484,92 +610,8 @@ void SystemClock_Config(void)
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-	static uint8_t i = 0;
-	static uint8_t cur_num = 0;
-	static uint8_t cnt = 0;
-	tx_stack_data packet;
-
-	if(HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO0)) {
-	  if(HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK) {
-		  cur_num = RxData[0] & 0x0F;
-		  cnt = RxData[0] >> 4;
-		  if(cur_num==cnt) {
-			  if(RxHeader.StdId != device_id)
-			  {
-				  HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
-				  if(RxData[1]==device_id) {
-					  to_id = RxHeader.StdId;
-					  point_to_point_tmr = 3000;
-					  for(i=0;i<RxHeader.DLC-2;i++) can_frame_id[RxHeader.StdId][(cur_num-1)*7+i]=RxData[i+2];
-					  can_pckt_length = (cnt-1)*7+RxHeader.DLC-2;
-					  for(i=0;i<can_pckt_length;i++) can_frame[i]=can_frame_id[RxHeader.StdId][i];
-					  add_can_frame(&can_frame[0],can_pckt_length);
-					  //frame_ready=1;
-				  }else if(RxData[1]==0xFF) {
-
-					  for(i=0;i<RxHeader.DLC-2;i++) can_frame_id[RxHeader.StdId][(cur_num-1)*7+i]=RxData[i+2];
-					  can_pckt_length = (cnt-1)*7+RxHeader.DLC-2;
-					  for(i=0;i<can_pckt_length;i++) can_frame[i]=can_frame_id[RxHeader.StdId][i];
-					  to_id = 0xFF;
-					  p_cnt++;
-					  add_can_frame(&can_frame[0],can_pckt_length);
-
-					  //frame_ready=1;
-				  }
-			  }
-
-		  }else {
-			  for(i=0;i<7;i++) can_frame_id[RxHeader.StdId][(cur_num-1)*7+i]=RxData[i+1];
-		  }
-		  if(RxHeader.StdId != device_id) {
-			  packet.id = RxHeader.StdId;
-			  packet.priority = LOW_PACKET_PRIORITY;
-			  packet.length = RxHeader.DLC;
-			  for(i=0;i<packet.length;++i) packet.data[i] = RxData[i];
-			  add_tx_can_packet(&can2_tx_stack,&packet);
-		  }
-	  }
-  }
-  if(HAL_CAN_GetRxFifoFillLevel(&hcan2, CAN_RX_FIFO0)) {
-	  if(HAL_CAN_GetRxMessage(&hcan2, CAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK) {
-		  cur_num = RxData[0] & 0x0F;
-		  cnt = RxData[0] >> 4;
-		  if(cur_num==cnt) {
-			  if(RxHeader.StdId != device_id)
-			  {
-				  HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
-				  if(RxData[1]==device_id) {
-					  to_id = RxHeader.StdId;
-					  point_to_point_tmr = 3000;
-					  for(i=0;i<RxHeader.DLC-2;i++) can_frame_id[RxHeader.StdId][(cur_num-1)*7+i]=RxData[i+2];
-					  can_pckt_length = (cnt-1)*7+RxHeader.DLC-2;
-					  for(i=0;i<can_pckt_length;i++) can_frame[i]=can_frame_id[RxHeader.StdId][i];
-					  add_can_frame(&can_frame[0],can_pckt_length);
-					  //frame_ready=1;
-				  }else if(RxData[1]==0xFF) {
-					  for(i=0;i<RxHeader.DLC-2;i++) can_frame_id[RxHeader.StdId][(cur_num-1)*7+i]=RxData[i+2];
-					  can_pckt_length = (cnt-1)*7+RxHeader.DLC-2;
-					  for(i=0;i<can_pckt_length;i++) can_frame[i]=can_frame_id[RxHeader.StdId][i];
-					  to_id = 0xFF;
-					  p_cnt++;
-					  add_can_frame(&can_frame[0],can_pckt_length);
-
-					  //frame_ready=1;
-				  }
-			  }
-
-		  }else {
-			  for(i=0;i<7;i++) can_frame_id[RxHeader.StdId][(cur_num-1)*7+i]=RxData[i+1];
-		  }
-		  if(RxHeader.StdId != device_id) {
-			  packet.id = RxHeader.StdId;
-			  packet.priority = LOW_PACKET_PRIORITY;
-			  packet.length = RxHeader.DLC;
-			  for(i=0;i<packet.length;++i) packet.data[i] = RxData[i];
-			  add_tx_can_packet(&can1_tx_stack,&packet);
-		  }
-	  }
-  }
+	check_can_rx(1);
+	check_can_rx(2);
 }
 
 
