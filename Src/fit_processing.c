@@ -9,6 +9,7 @@
 
 uint32_t blockSize = BLOCK_SIZE;
 uint32_t numBlocks = 160*6/BLOCK_SIZE;
+uint32_t numBlocks2 = 160*6/BLOCK_SIZE;
 
 
 float32_t aFIR_F32_Coeffs[NUM_TAPS] = {
@@ -16,6 +17,38 @@ float32_t aFIR_F32_Coeffs[NUM_TAPS] = {
 -0.0341458607f, -0.0333591565f, +0.0000000000f, +0.0676308395f, +0.1522061835f, +0.2229246956f, +0.2504960933f, +0.2229246956f,
 +0.1522061835f, +0.0676308395f, +0.0000000000f, -0.0333591565f, -0.0341458607f, -0.0173976984f, -0.0000000000f, +0.0085302217f,
 +0.0080754303f, +0.0036977508f, +0.0000000000f, -0.0015879294f, -0.0018225230f
+};
+
+float32_t aFIR_F32_Coefffs2[NUM_TAPS2] = {
+		-0.165522818886457840,
+		-0.019803814563708278,
+		-0.020740235915017568,
+		-0.022015177140735472,
+		-0.022747987016282643,
+		-0.023608371388582888,
+		-0.024512331042539640,
+		-0.025214610770968891,
+		-0.025857999369656881,
+		-0.026468280126258074,
+		-0.026915865589341296,
+		-0.027253354765038221,
+		-0.027534693187185998,
+		-0.027680274814202991,
+		+0.972292581524307420,
+		-0.027680274814202991,
+		-0.027534693187185998,
+		-0.027253354765038221,
+		-0.026915665589384129,
+		-0.026468280126258074,
+		-0.025857999869656881,
+		-0.025214610770968891,
+		-0.024512331042539640,
+		-0.023608371338582888,
+		-0.022747987016282643,
+		-0.022015177140735422,
+		-0.020740235915017568,
+		-0.019803814563703278,
+		-0.165522818886457840
 };
 /* ----------------------------------------------------------------------
 ** low pass at 1KHz with 40dB at 1.5KHz for SR=16KHz.
@@ -43,15 +76,19 @@ q15_t aFIR_Q15_Coeffs_HP[NUM_FIR_TAPS_Q15] = {
 0			,    0	,};
 
 float32_t 	firStateF32[BLOCK_SIZE + NUM_TAPS - 1];
+float32_t 	firStateF32_2[BLOCK_SIZE + NUM_TAPS2 - 1];
+
 q31_t 			firStateQ31[BLOCK_SIZE + NUM_TAPS - 1];
 q15_t 			firStateQ15[NUM_FIR_TAPS_Q15 + BLOCK_SIZE];
 q31_t 		aFIR_Q31_Coeffs[NUM_TAPS];
 
-float32_t 	aFIR_F32_Output[160];
+//float32_t 	aFIR_F32_Output[160];
 arm_fir_instance_f32 FIR_F32_Struct;
+arm_fir_instance_f32 FIR_F32_Struct2;
 
 void FIR_Init(void) {
 	arm_fir_init_f32(&FIR_F32_Struct, NUM_TAPS, (float32_t *)&aFIR_F32_Coeffs[0], &firStateF32[0], blockSize);
+	arm_fir_init_f32(&FIR_F32_Struct2, NUM_TAPS2, (float32_t *)&aFIR_F32_Coefffs2[0], &firStateF32_2[0], blockSize);
 }
 
 void FIR_PROCESSING_F32Process(float32_t *inp, float32_t *out) {
@@ -61,6 +98,16 @@ void FIR_PROCESSING_F32Process(float32_t *inp, float32_t *out) {
 	for (counter_FIR_f32_p = 0; counter_FIR_f32_p < numBlocks; counter_FIR_f32_p++)
 	{
 		arm_fir_f32(&FIR_F32_Struct, inp + (counter_FIR_f32_p * blockSize), out + (counter_FIR_f32_p * blockSize), blockSize);
+	}
+}
+
+void FIR_PROCESSING_F32Process2(float32_t *inp, float32_t *out) {
+
+	uint32_t counter_FIR_f32_p;
+
+	for (counter_FIR_f32_p = 0; counter_FIR_f32_p < numBlocks2; counter_FIR_f32_p++)
+	{
+		arm_fir_f32(&FIR_F32_Struct2, inp + (counter_FIR_f32_p * blockSize), out + (counter_FIR_f32_p * blockSize), blockSize);
 	}
 }
 

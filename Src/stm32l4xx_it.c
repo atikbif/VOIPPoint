@@ -220,6 +220,12 @@ void SysTick_Handler(void)
 		  tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
 		  send_data_to_uart1(tx1_buf,3);
 		  break;
+	  case 3:
+	      tx1_buf[0]=0x4A;
+	      tx1_buf[1]=0xAA;
+	      tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
+	      send_data_to_uart1(tx1_buf,3);
+	      break;
 	  default:
 		  break;
 	  }
