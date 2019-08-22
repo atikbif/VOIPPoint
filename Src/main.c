@@ -39,6 +39,7 @@
 #include "can_tx_stack.h"
 #include "uart.h"
 #include <stdlib.h>
+#include <arm_math.h> //подключаем библиотеку
 
 /* USER CODE END Includes */
 
@@ -52,6 +53,7 @@
 
 #define	FRAME_SIZE	160
 #define SaturaLH(N, L, H) (((N)<(L))?(L):(((N)>(H))?(H):(N)))
+#define FFT_SIZE 128//указываем размер FFT
 
 /* USER CODE END PD */
 
@@ -128,6 +130,20 @@ tx_stack can2_tx_stack;
 
 uint8_t button1 = 0;
 uint8_t button2 = 0;
+
+float32_t in_fft[FFT_SIZE] = {0};
+float32_t out_fft[FFT_SIZE] = {0};
+arm_rfft_fast_instance_f32 S;
+//float32_t maxvalue;
+//uint32_t maxindex;
+
+float32_t base_2_5_kHz_level;
+float32_t test_2_5_kHz_level;
+
+volatile uint16_t test_2_5_kHz_tmr = 0;
+uint8_t test_2_5_kHz_res = 0;
+uint8_t test_2_5_kHz_state = 0;
+uint8_t test_2_5_kHz_check_enable = 0;
 
 /* USER CODE END PV */
 
@@ -373,7 +389,8 @@ static void decode_work() {
 
 	//HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
 	can_length = get_can_frame(can_buf);
-	if(button2) {
+	//if(button2 || start_test_2_5_kHz) {
+	if((test_2_5_kHz_state==1) || (test_2_5_kHz_state==2)) {
 		can_tmr = 0;
 		for(i=0;i<FRAME_SIZE;i++) {
 			audio_stream[i] = sin_ex[sin_offset++]+0x8000;
@@ -399,12 +416,12 @@ static void encode_work() {
 	static int16_t tmp_frame[FRAME_SIZE];
 	if(DmaMicrophoneBuffCplt) {
 
-	  if(button1 || button2) {
+	  if(button1) {
 		  for(i=0;i<FRAME_SIZE;i++) {
 			  tmp_frame[i]  = SaturaLH((RecBuf[1][i] >>8), -32768, 32767);
 			  //tmp_frame[i] = wav_ex[wav_offset]+0x8000;
 			  //wav_offset++;
-			  if(wav_offset>=sizeof(wav_ex)/2) wav_offset = 0;
+			  //if(wav_offset>=sizeof(wav_ex)/2) wav_offset = 0;
 		  }
 		  encoded_length = opus_encode(enc, (opus_int16*)tmp_frame, FRAME_SIZE,(unsigned char*) &microphone_encoded_data[1][0], 256);
 		  if(encoded_length>0) {
@@ -414,12 +431,12 @@ static void encode_work() {
 	  DmaMicrophoneBuffCplt = 0;
 	}else if(DmaMicrophoneHalfBuffCplt) {
 
-	  if(button1 || button2) {
+	  if(button1) {
 		  for(i=0;i<FRAME_SIZE;i++) {
 			  tmp_frame[i]  = SaturaLH((RecBuf[0][i] >>8), -32768, 32767);
 			  //tmp_frame[i] = wav_ex[wav_offset]+0x8000;
 			  //wav_offset++;
-			  if(wav_offset>=sizeof(wav_ex)/2) wav_offset = 0;
+			  //if(wav_offset>=sizeof(wav_ex)/2) wav_offset = 0;
 		  }
 		  encoded_length = opus_encode(enc, (opus_int16*)tmp_frame, FRAME_SIZE,(unsigned char*) &microphone_encoded_data[0][0], 256);
 		  if(encoded_length>0) {
@@ -436,7 +453,7 @@ static void convert(uint8_t num) {
 	if(get_audio_frame(tmp_frame)==0) {
 		for(i=0;i<FRAME_SIZE;i++) conv[num][i] = 32768;
 	}else {
-		HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+		//HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 		for(i=0;i<FRAME_SIZE;i++) {
 			conv[num][i] = tmp_frame[i] + 32768;
 		}
@@ -452,6 +469,8 @@ static void convert(uint8_t num) {
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+
+	uint16_t i = 0;
 
   /* USER CODE END 1 */
   
@@ -521,11 +540,45 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
+  arm_rfft_fast_init_f32(&S, FFT_SIZE);
+
   DmaMicrophoneBuffCplt=0;
   while(DmaMicrophoneBuffCplt==0);
 
   while (1)
   {
+	  if(button2 && (test_2_5_kHz_state==0)) {
+		  test_2_5_kHz_state = 1;
+		  test_2_5_kHz_tmr = 0;
+		  test_2_5_kHz_res = 0;
+		  //test_2_5_kHz_check_enable = 1;
+	  }
+
+	  if(test_2_5_kHz_state==1) {
+		  if(test_2_5_kHz_check_enable) {
+			  for(i=0;i<FFT_SIZE;i++) in_fft[i] = RecBuf[0][i];
+			  arm_rfft_fast_f32(&S, in_fft,out_fft,0);
+			  arm_cmplx_mag_f32(out_fft,out_fft, FFT_SIZE/2);
+			  base_2_5_kHz_level = out_fft[40];
+		  }
+		  test_2_5_kHz_state = 2;
+	  }
+	  if((test_2_5_kHz_state==2) && (test_2_5_kHz_tmr>=1000)) {
+		  if(test_2_5_kHz_check_enable) {
+			  for(i=0;i<FFT_SIZE;i++) in_fft[i] = RecBuf[01][i];
+			  arm_rfft_fast_f32(&S, in_fft,out_fft,0);
+			  arm_cmplx_mag_f32(out_fft,out_fft, FFT_SIZE/2);
+			  test_2_5_kHz_level = out_fft[40];
+			  if(test_2_5_kHz_level/base_2_5_kHz_level>=32) test_2_5_kHz_res = 1;
+			  //if(test_2_5_kHz_res) HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+			  else test_2_5_kHz_res = 0;
+			  test_2_5_kHz_check_enable = 0;
+		  }
+
+		  test_2_5_kHz_state = 3;
+	  }
+	  if((test_2_5_kHz_state==3) && (test_2_5_kHz_tmr>=2000)) test_2_5_kHz_state = 0;
+
 	  if(DmaDacBuffCplt) {
 		  decode_work();
 		  DmaDacBuffCplt = 0;
@@ -541,6 +594,7 @@ int main(void)
 		  packet_tmr=0;
 		  can_caught_id = 0;
 	  }
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

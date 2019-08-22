@@ -61,6 +61,8 @@ extern uint8_t tx1_buf[UART_BUF_SISE];
 extern uint16_t rx1_cnt;
 extern uint16_t rx1_tmr;
 extern uint16_t packet_tmr;
+extern volatile uint16_t test_2_5_kHz_tmr;
+extern uint8_t test_2_5_kHz_state;
 
 /* USER CODE END 0 */
 
@@ -197,6 +199,7 @@ void SysTick_Handler(void)
   static uint16_t i=0;
   static uint8_t state = 0;
   can_write_from_stack();
+  if(test_2_5_kHz_state) test_2_5_kHz_tmr++;
   i++;
   packet_tmr++;
   if(i>=100) {
