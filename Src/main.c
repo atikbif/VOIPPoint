@@ -39,7 +39,8 @@
 #include "can_tx_stack.h"
 #include "uart.h"
 #include <stdlib.h>
-#include <arm_math.h> //подключаем библиотеку
+#include <arm_math.h>
+#include "can_cmd.h"
 
 /* USER CODE END Includes */
 
@@ -99,18 +100,10 @@ static uint8_t				 can_frame[OPUS_PACKET_MAX_LENGTH];
 //static uint8_t				 can_frame_id[256][40];
 
 
-#define		UNKNOWN_TYPE	0
-#define		PC_TO_ALL		1
-#define		PC_TO_GROUP		2
-#define		PC_TO_POINT		3
-#define		POINT_TO_ALL	4
-#define		POINT_TO_PC		5
-
 static uint8_t 				 can_priority_frame[OPUS_PACKET_MAX_LENGTH];
 static uint32_t				 can_caught_id = 0;
 uint16_t can_tmr = 0;
 uint8_t group_id = 1;
-unsigned short device_id = 1;
 unsigned short gate_id = 0xFE;
 unsigned short point_to_point_tmr = 0x00;
 uint16_t packet_tmr = 0;
@@ -130,6 +123,7 @@ tx_stack can2_tx_stack;
 
 uint8_t button1 = 0;
 uint8_t button2 = 0;
+uint8_t button3 = 0;
 
 float32_t in_fft[FFT_SIZE] = {0};
 float32_t out_fft[FFT_SIZE] = {0};
@@ -144,6 +138,13 @@ volatile uint16_t test_2_5_kHz_tmr = 0;
 uint8_t test_2_5_kHz_res = 0;
 uint8_t test_2_5_kHz_state = 0;
 uint8_t test_2_5_kHz_check_enable = 0;
+uint8_t check_cmd = 0;
+
+uint8_t pos_in_group = 1;
+extern uint8_t search_next_try;
+
+uint16_t discrete_state = 0;
+uint8_t alarm_flag = 0;
 
 /* USER CODE END PV */
 
@@ -156,17 +157,6 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-typedef struct
-{
- uint32_t param: 8;
- uint32_t cmd: 4;
- uint32_t group_addr: 7;
- uint32_t point_addr: 7;
- uint32_t type: 3;
- uint32_t unused_bits : 3;
-} id_field;
-
-
 
 uint8_t static check_id_priority(uint32_t packet_id) {
 	id_field *input_id = (id_field*)(&packet_id);
@@ -177,7 +167,7 @@ uint8_t static check_id_priority(uint32_t packet_id) {
 		return 1;
 	}
 	if(input_id->type==PC_TO_POINT) { // компьютер точка
-		if((input_id->group_addr == group_id) && (input_id->point_addr == device_id)) { //совпадает адрес группы и адрес точки
+		if((input_id->group_addr == group_id) && (input_id->point_addr == pos_in_group)) { //совпадает адрес группы и адрес точки
 			*cur_id = *input_id;
 			return 1;
 		}
@@ -225,7 +215,7 @@ static void check_can_rx(uint8_t can_num) {
 	if(HAL_CAN_GetRxFifoFillLevel(hcan, CAN_RX_FIFO0)) {
 		if(HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK) {
 			p_id = (id_field*)(&(RxHeader.ExtId));
-			if(p_id->cmd==1) { // аудиопоток
+			if(p_id->cmd==AUDIO_PACKET) { // аудиопоток
 				if(check_id_priority(RxHeader.ExtId)) {
 					packet_tmr = 0;
 					cur_num = p_id->param & 0x0F;
@@ -251,16 +241,42 @@ static void check_can_rx(uint8_t can_num) {
 						}
 					}
 				}
+			}else if(p_id->cmd==FIND_NEXT_POINT) {
+					if(p_id->param==FIND_REQUEST) {	// запрос от предыдущей в цепочке точки
+						pos_in_group = RxData[0] + 1;
+						next_point(FIND_ANSWER);	// отправить ответ
+					}else if(p_id->param==FIND_ANSWER) {
+						search_next_try = 0;	// ответ от следующей в цепочке точки
+					}
+			}else if(p_id->cmd==SCAN_GROUP) {
+				if(can_num==1) {	// транслировать запрос сканирования дальше
+					check_cmd = 1;	// запустить проверку точки
+				}
+			}else if(p_id->cmd==SET_OUTS) {	// установить выход
+				if(p_id->param == pos_in_group && p_id->group_addr == group_id) {
+
+					if(RxData[0]==1) {
+						if(RxData[1]) discrete_state |= 0x4000;else discrete_state &= ~(0x4000);
+					}else if(RxData[0]==2) {
+						if(RxData[1]) discrete_state |= 0x8000;else discrete_state &= ~(0x8000);
+					}
+					return;
+				}
+			}
+			if(p_id->group_addr == group_id) {
+				if(p_id->cmd==FIND_NEXT_POINT) return;
+			}
+
+			if(!(p_id->point_addr == pos_in_group && p_id->group_addr == group_id)) {
+				packet.id = RxHeader.ExtId;
+				packet.priority = LOW_PACKET_PRIORITY;
+				packet.length = RxHeader.DLC;
+				for(i=0;i<packet.length;++i) packet.data[i] = RxData[i];
+				if(can_num==1)	add_tx_can_packet(&can2_tx_stack,&packet);
+				else add_tx_can_packet(&can1_tx_stack,&packet);
 			}
 		}
-		if(!(p_id->point_addr == device_id && p_id->group_addr == group_id)) {
-			packet.id = RxHeader.ExtId;
-			packet.priority = LOW_PACKET_PRIORITY;
-			packet.length = RxHeader.DLC;
-			for(i=0;i<packet.length;++i) packet.data[i] = RxData[i];
-			if(can_num==1)	add_tx_can_packet(&can2_tx_stack,&packet);
-			else add_tx_can_packet(&can1_tx_stack,&packet);
-		}
+
 	}
 }
 
@@ -340,7 +356,7 @@ static void send_full_frame(uint8_t len, uint8_t *ptr) {
 	while(cur_pckt<=pckt_cnt) {
 		p_id->unused_bits = 0;
 		p_id->type = POINT_TO_ALL;
-		p_id->point_addr = device_id;
+		p_id->point_addr = pos_in_group;
 		p_id->group_addr = group_id;
 		p_id->cmd = 1;
 		p_id->param = (cur_pckt&0x0F)|((pckt_cnt&0x0F)<<4);
@@ -547,6 +563,15 @@ int main(void)
 
   while (1)
   {
+	  if((discrete_state & (1<<9)) || (discrete_state & (1<<10)) || ((discrete_state & (1<<8))==0)) alarm_flag=1;
+	  else alarm_flag=0;
+	  if(check_cmd && (test_2_5_kHz_state==0)) {
+		  test_2_5_kHz_state = 1;
+		  test_2_5_kHz_tmr = 0;
+		  test_2_5_kHz_res = 0;
+		  test_2_5_kHz_check_enable = 1;
+	  }
+
 	  if(button2 && (test_2_5_kHz_state==0)) {
 		  test_2_5_kHz_state = 1;
 		  test_2_5_kHz_tmr = 0;
@@ -570,9 +595,22 @@ int main(void)
 			  arm_cmplx_mag_f32(out_fft,out_fft, FFT_SIZE/2);
 			  test_2_5_kHz_level = out_fft[40];
 			  if(test_2_5_kHz_level/base_2_5_kHz_level>=32) test_2_5_kHz_res = 1;
-			  //if(test_2_5_kHz_res) HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 			  else test_2_5_kHz_res = 0;
 			  test_2_5_kHz_check_enable = 0;
+			  if(check_cmd) {	// был запрос на сканирование от шлюза
+				  if(test_2_5_kHz_res) {
+					  discrete_state |= 0x0001;
+				  }else {
+					  discrete_state &= ~(0x0001);
+				  }
+				  if(button3) {
+					  discrete_state |= 0x0080;
+				  }else {
+					  discrete_state &= ~(0x0080);
+				  }
+				  send_point_state(1);
+				  check_cmd = 0;
+			  }
 		  }
 
 		  test_2_5_kHz_state = 3;

@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "uart.h"
+#include "can_cmd.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,6 +56,7 @@
 /* USER CODE BEGIN 0 */
 
 extern void can_write_from_stack();
+extern void send_search_next_point(uint8_t t);
 
 extern uint8_t rx1_buf[UART_BUF_SISE];
 extern uint8_t tx1_buf[UART_BUF_SISE];
@@ -63,6 +65,12 @@ extern uint16_t rx1_tmr;
 extern uint16_t packet_tmr;
 extern volatile uint16_t test_2_5_kHz_tmr;
 extern uint8_t test_2_5_kHz_state;
+extern uint16_t discrete_state;
+uint16_t prev_discr_state = 0;
+
+uint16_t search_next_tmr = 0;
+uint8_t search_next_try = 0;
+extern uint8_t alarm_flag;
 
 /* USER CODE END 0 */
 
@@ -198,11 +206,36 @@ void SysTick_Handler(void)
   /* USER CODE BEGIN SysTick_IRQn 0 */
   static uint16_t i=0;
   static uint8_t state = 0;
+  static uint16_t last_point_tmr = 0;
+  static uint16_t sec_tmr=0;
+
   can_write_from_stack();
   if(test_2_5_kHz_state) test_2_5_kHz_tmr++;
+  search_next_tmr++;
+  if(search_next_tmr>=100) {
+	  search_next_tmr = 0;
+	  next_point(FIND_REQUEST);
+	  if(search_next_try<3) search_next_try++;
+	  sec_tmr++;
+	  if(sec_tmr>=10) {
+		  sec_tmr = 0;
+		  if(search_next_try>=3) { last_point(); }
+		  if(alarm_flag) {send_point_state(1);HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);}
+	  }
+  }
   i++;
   packet_tmr++;
-  if(i>=100) {
+  if(prev_discr_state != discrete_state) {
+	  send_point_state(1);
+  }
+  prev_discr_state = discrete_state;
+  if(i==25) {
+	  tx1_buf[0]=0x39;
+	  tx1_buf[1]=0xAA;
+	  tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
+	  send_data_to_uart1(tx1_buf,3);
+  }
+  if(i>=50) {
 	  i = 0;
 	  switch(state) {
 	  case 0:
@@ -211,29 +244,49 @@ void SysTick_Handler(void)
 		  tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
 		  send_data_to_uart1(tx1_buf,3);
 		  break;
-	  case 1:
-		  tx1_buf[0]=0x58;
-		  tx1_buf[1]=0xAA;
-		  tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
-		  send_data_to_uart1(tx1_buf,3);
-		  break;
-	  case 2:
+	  case 1:	// кнопка 1
 		  tx1_buf[0]=0x49;
 		  tx1_buf[1]=0xAA;
 		  tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
 		  send_data_to_uart1(tx1_buf,3);
 		  break;
-	  case 3:
+	  case 2:	// кнопка 2
 	      tx1_buf[0]=0x4A;
 	      tx1_buf[1]=0xAA;
 	      tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
 	      send_data_to_uart1(tx1_buf,3);
 	      break;
+	  case 3:// дискр вход 1
+		  tx1_buf[0]=0x39;
+		  tx1_buf[1]=0xAA;
+		  tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
+		  send_data_to_uart1(tx1_buf,3);
+		  break;
+	  case 4:// дискр вход 2
+		  tx1_buf[0]=0x3A;
+		  tx1_buf[1]=0xAA;
+		  tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
+		  send_data_to_uart1(tx1_buf,3);
+		  break;
+	  case 5:// реле 1
+		  tx1_buf[0]=0x61;
+		  if((discrete_state>>8)&0x40) tx1_buf[1]=0x0F;
+		  else tx1_buf[1]=0xF0;
+		  tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
+		  send_data_to_uart1(tx1_buf,3);
+		  break;
+	  case 6:// реле 2
+		  tx1_buf[0]=0x62;
+		  if((discrete_state>>8)&0x80) tx1_buf[1]=0x0F;
+		  else tx1_buf[1]=0xF0;
+		  tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
+		  send_data_to_uart1(tx1_buf,3);
+		  break;
 	  default:
 		  break;
 	  }
 	  state++;
-	  if(state>=5) state=0;
+	  if(state>=7) state=0;
   }
   if(rx1_cnt) {rx1_tmr++;}else rx1_tmr=0;
   /* USER CODE END SysTick_IRQn 0 */
