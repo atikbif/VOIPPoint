@@ -146,6 +146,8 @@ extern uint8_t search_next_try;
 uint16_t discrete_state = 0;
 uint8_t alarm_flag = 0;
 
+uint8_t point_flag = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -164,11 +166,13 @@ uint8_t static check_id_priority(uint32_t packet_id) {
 	if(input_id->type==POINT_TO_PC) return 0; // точка компьютер игнорируем
 	if(input_id->type==PC_TO_ALL) { // компьютер ко всем
 		*cur_id = *input_id;
+		point_flag = 0;
 		return 1;
 	}
 	if(input_id->type==PC_TO_POINT) { // компьютер точка
 		if((input_id->group_addr == group_id) && (input_id->point_addr == pos_in_group)) { //совпадает адрес группы и адрес точки
 			*cur_id = *input_id;
+			point_flag = 1;
 			return 1;
 		}
 		return 0;
@@ -176,6 +180,7 @@ uint8_t static check_id_priority(uint32_t packet_id) {
 	if(input_id->type==PC_TO_GROUP) { // компьютер группа
 		if(input_id->group_addr == group_id) { //совпадает адрес группы
 			*cur_id = *input_id;
+			point_flag = 0;
 			return 1;
 		}
 		return 0;
@@ -183,17 +188,20 @@ uint8_t static check_id_priority(uint32_t packet_id) {
 	if(input_id->type==POINT_TO_ALL) { // точка все
 		if(cur_id->type==UNKNOWN_TYPE) {	// пакеты не захвачены
 			*cur_id = *input_id;
+			point_flag = 0;
 			return 1;
 		}
 		if(cur_id->type!=PC_TO_ALL && cur_id->type!=PC_TO_GROUP && cur_id->type!=PC_TO_POINT)  {
 			// ранее захваченный источник
 			if(cur_id->group_addr == input_id->group_addr && cur_id->point_addr == input_id->point_addr) {
 				*cur_id = *input_id;
+				point_flag = 0;
 				return 1;
 			}
 			// активный пакет не из родной группы, новый запрос из родной группы, перехватить
 			if(cur_id->group_addr != group_id && input_id->group_addr == group_id) {
 				*cur_id = *input_id;
+				point_flag = 0;
 				return 1;
 
 			}
@@ -223,7 +231,7 @@ static void check_can_rx(uint8_t can_num) {
 					if(cur_num) {
 						if(cur_num==cnt) {
 						  //HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
-						  if(p_id->type==POINT_TO_ALL || p_id->type==PC_TO_ALL) { // точка все
+						  if(p_id->type==POINT_TO_ALL || p_id->type==PC_TO_ALL || p_id->type==PC_TO_POINT) { // точка все
 							  j = (cur_num-1)*8;
 							  for(i=0;i<RxHeader.DLC;i++) {
 								  if(j+i<OPUS_PACKET_MAX_LENGTH) can_priority_frame[j+i]=RxData[i];
@@ -252,16 +260,16 @@ static void check_can_rx(uint8_t can_num) {
 				if(can_num==1) {	// транслировать запрос сканирования дальше
 					check_cmd = 1;	// запустить проверку точки
 				}
-			}else if(p_id->cmd==SET_OUTS) {	// установить выход
-				if(p_id->param == pos_in_group && p_id->group_addr == group_id) {
-
+			}else if(p_id->cmd==SET_ALL_OUTS) {	// установить выход
+				if(p_id->group_addr == group_id) {
 					if(RxData[0]==1) {
 						if(RxData[1]) discrete_state |= 0x4000;else discrete_state &= ~(0x4000);
 					}else if(RxData[0]==2) {
 						if(RxData[1]) discrete_state |= 0x8000;else discrete_state &= ~(0x8000);
 					}
-					return;
 				}
+			}else if(p_id->cmd==GET_POINTS_STATE) {
+				send_point_state(1);
 			}
 			if(p_id->group_addr == group_id) {
 				if(p_id->cmd==FIND_NEXT_POINT) return;
@@ -355,7 +363,8 @@ static void send_full_frame(uint8_t len, uint8_t *ptr) {
 	i=1;
 	while(cur_pckt<=pckt_cnt) {
 		p_id->unused_bits = 0;
-		p_id->type = POINT_TO_ALL;
+		if(point_flag==0) p_id->type = POINT_TO_ALL;
+		else p_id->type = POINT_TO_PC;
 		p_id->point_addr = pos_in_group;
 		p_id->group_addr = group_id;
 		p_id->cmd = 1;
@@ -382,7 +391,7 @@ static void send_full_frame(uint8_t len, uint8_t *ptr) {
 static void can_work() {
   if(encoded_micr_ready_buf_num) {
 	  if(encoded_length>0) {
-		  if(button1)
+		  if(button1 || button2)
 		  {
 			  send_full_frame(encoded_length,(unsigned char*)&microphone_encoded_data[encoded_micr_ready_buf_num-1]);
 		  }
@@ -405,7 +414,6 @@ static void decode_work() {
 
 	//HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
 	can_length = get_can_frame(can_buf);
-	//if(button2 || start_test_2_5_kHz) {
 	if((test_2_5_kHz_state==1) || (test_2_5_kHz_state==2)) {
 		can_tmr = 0;
 		for(i=0;i<FRAME_SIZE;i++) {
@@ -413,8 +421,16 @@ static void decode_work() {
 			if(sin_offset>=sizeof(sin_ex)/2) sin_offset = 0;
 			add_audio_frame(audio_stream,FRAME_SIZE);
 		}
-	}
-	else if(can_length) {
+	}else if(button2) {
+		can_tmr = 0;
+		for(i=0;i<FRAME_SIZE;i++) {
+			audio_stream[i] = wav_ex[wav_offset2]+0x8000;
+			audio_stream[i]*=0.2;
+			wav_offset2++;
+			if(wav_offset2>=sizeof(wav_ex)/2) wav_offset2 = 0;
+			add_audio_frame(audio_stream,FRAME_SIZE);
+		}
+	}else if(can_length) {
 		can_tmr = 0;
 		res = opus_decode(dec,(unsigned char*)&can_buf[0],can_length,&audio_stream[0],1024,0);
 		if(res!=FRAME_SIZE) {add_empty_audio_frame();}
@@ -430,19 +446,24 @@ static void decode_work() {
 static void encode_work() {
 	uint16_t i = 0;
 	static int16_t tmp_frame[FRAME_SIZE];
+	if(test_2_5_kHz_state) return;
 	if(DmaMicrophoneBuffCplt) {
 
 	  if(button1) {
 		  for(i=0;i<FRAME_SIZE;i++) {
 			  tmp_frame[i]  = SaturaLH((RecBuf[1][i] >>8), -32768, 32767);
-			  //tmp_frame[i] = wav_ex[wav_offset]+0x8000;
-			  //wav_offset++;
-			  //if(wav_offset>=sizeof(wav_ex)/2) wav_offset = 0;
 		  }
-		  encoded_length = opus_encode(enc, (opus_int16*)tmp_frame, FRAME_SIZE,(unsigned char*) &microphone_encoded_data[1][0], 256);
-		  if(encoded_length>0) {
-			  encoded_micr_ready_buf_num = 2;
+
+	  }else if(button2) {
+		  for(i=0;i<FRAME_SIZE;i++) {
+			  tmp_frame[i] = wav_ex[wav_offset]+0x8000;
+			  wav_offset++;
+			  if(wav_offset>=sizeof(wav_ex)/2) wav_offset = 0;
 		  }
+	  }
+	  encoded_length = opus_encode(enc, (opus_int16*)tmp_frame, FRAME_SIZE,(unsigned char*) &microphone_encoded_data[1][0], 256);
+	  if(encoded_length>0) {
+		  encoded_micr_ready_buf_num = 2;
 	  }
 	  DmaMicrophoneBuffCplt = 0;
 	}else if(DmaMicrophoneHalfBuffCplt) {
@@ -450,14 +471,17 @@ static void encode_work() {
 	  if(button1) {
 		  for(i=0;i<FRAME_SIZE;i++) {
 			  tmp_frame[i]  = SaturaLH((RecBuf[0][i] >>8), -32768, 32767);
-			  //tmp_frame[i] = wav_ex[wav_offset]+0x8000;
-			  //wav_offset++;
-			  //if(wav_offset>=sizeof(wav_ex)/2) wav_offset = 0;
 		  }
-		  encoded_length = opus_encode(enc, (opus_int16*)tmp_frame, FRAME_SIZE,(unsigned char*) &microphone_encoded_data[0][0], 256);
-		  if(encoded_length>0) {
-			  encoded_micr_ready_buf_num = 1;
+	  }else if(button2) {
+		  for(i=0;i<FRAME_SIZE;i++) {
+			  tmp_frame[i] = wav_ex[wav_offset]+0x8000;
+			  wav_offset++;
+			  if(wav_offset>=sizeof(wav_ex)/2) wav_offset = 0;
 		  }
+	  }
+	  encoded_length = opus_encode(enc, (opus_int16*)tmp_frame, FRAME_SIZE,(unsigned char*) &microphone_encoded_data[0][0], 256);
+	  if(encoded_length>0) {
+		  encoded_micr_ready_buf_num = 1;
 	  }
 	  DmaMicrophoneHalfBuffCplt = 0;
 	}
@@ -526,7 +550,7 @@ int main(void)
 
   //FIR_Init();
 
-  enc = opus_encoder_create(8000, 1, OPUS_APPLICATION_VOIP , &error);
+  enc = opus_encoder_create(8000, 1, OPUS_APPLICATION_RESTRICTED_LOWDELAY, &error);
   opus_encoder_ctl(enc, OPUS_SET_COMPLEXITY(2));
   //opus_encoder_ctl(enc, OPUS_SET_BITRATE(8000));
   dec = opus_decoder_create(8000,1,&error);
@@ -570,13 +594,6 @@ int main(void)
 		  test_2_5_kHz_tmr = 0;
 		  test_2_5_kHz_res = 0;
 		  test_2_5_kHz_check_enable = 1;
-	  }
-
-	  if(button2 && (test_2_5_kHz_state==0)) {
-		  test_2_5_kHz_state = 1;
-		  test_2_5_kHz_tmr = 0;
-		  test_2_5_kHz_res = 0;
-		  //test_2_5_kHz_check_enable = 1;
 	  }
 
 	  if(test_2_5_kHz_state==1) {

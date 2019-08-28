@@ -18,12 +18,14 @@
 #define		POINT_TO_PC		5
 #define		UNUSED_TYPE		6
 
-#define		AUDIO_PACKET	1
-#define		FIND_NEXT_POINT	2
-#define		SCAN_GROUP		3
-#define		POINT_STATE		4
-#define		SET_OUTS		5
-#define		LAST_POINT		6
+#define		AUDIO_PACKET		1
+#define		FIND_NEXT_POINT		2
+#define		SCAN_GROUP			3
+#define		POINT_STATE			4
+#define		SET_OUTS			5
+#define		LAST_POINT			6
+#define		SET_ALL_OUTS		7
+#define		GET_POINTS_STATE	8
 
 #define		FIND_REQUEST	1
 #define		FIND_ANSWER		2

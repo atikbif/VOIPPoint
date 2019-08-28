@@ -206,7 +206,6 @@ void SysTick_Handler(void)
   /* USER CODE BEGIN SysTick_IRQn 0 */
   static uint16_t i=0;
   static uint8_t state = 0;
-  static uint16_t last_point_tmr = 0;
   static uint16_t sec_tmr=0;
 
   can_write_from_stack();
