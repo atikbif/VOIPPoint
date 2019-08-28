@@ -20,6 +20,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "adc.h"
 #include "can.h"
 #include "dac.h"
 #include "dfsdm.h"
@@ -115,8 +116,9 @@ unsigned char encoded_micr_ready_buf_num = 0;
 
 uint32_t wav_offset = 0;
 uint32_t wav_offset2 = 0;
-
 uint32_t sin_offset = 0;
+uint32_t call_offset = 0;
+uint32_t call_offset2 = 0;
 
 tx_stack can1_tx_stack;
 tx_stack can2_tx_stack;
@@ -147,6 +149,11 @@ uint16_t discrete_state = 0;
 uint8_t alarm_flag = 0;
 
 uint8_t point_flag = 0;
+uint16_t point_tmr = 0;
+
+uint16_t adc_data[2] = {0,0};
+uint8_t prev_pow_data[2] = {0,0};
+uint8_t pow_data[2] = {0,0};
 
 /* USER CODE END PV */
 
@@ -172,6 +179,7 @@ uint8_t static check_id_priority(uint32_t packet_id) {
 	if(input_id->type==PC_TO_POINT) { // компьютер точка
 		if((input_id->group_addr == group_id) && (input_id->point_addr == pos_in_group)) { //совпадает адрес группы и адрес точки
 			*cur_id = *input_id;
+			point_tmr = 0;
 			point_flag = 1;
 			return 1;
 		}
@@ -222,15 +230,17 @@ static void check_can_rx(uint8_t can_num) {
 	if(can_num==1) hcan = &hcan1; else hcan = &hcan2;
 	if(HAL_CAN_GetRxFifoFillLevel(hcan, CAN_RX_FIFO0)) {
 		if(HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK) {
+
 			p_id = (id_field*)(&(RxHeader.ExtId));
 			if(p_id->cmd==AUDIO_PACKET) { // аудиопоток
-				if(check_id_priority(RxHeader.ExtId)) {
+
+				if(button1==0 && button2==0 && check_id_priority(RxHeader.ExtId)) {
 					packet_tmr = 0;
 					cur_num = p_id->param & 0x0F;
 					cnt = (p_id->param & 0xFF)>> 4;
 					if(cur_num) {
 						if(cur_num==cnt) {
-						  //HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+						  HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 						  if(p_id->type==POINT_TO_ALL || p_id->type==PC_TO_ALL || p_id->type==PC_TO_POINT) { // точка все
 							  j = (cur_num-1)*8;
 							  for(i=0;i<RxHeader.DLC;i++) {
@@ -241,6 +251,7 @@ static void check_can_rx(uint8_t can_num) {
 							  for(i=0;i<can_pckt_length;i++) {
 								  can_frame[i]=can_priority_frame[i];
 							  }
+							  //HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 							  add_can_frame(&can_frame[0],can_pckt_length);
 						  }
 						}else {
@@ -412,6 +423,7 @@ static void decode_work() {
 
 	can_tmr++;
 
+
 	//HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
 	can_length = get_can_frame(can_buf);
 	if((test_2_5_kHz_state==1) || (test_2_5_kHz_state==2)) {
@@ -424,13 +436,15 @@ static void decode_work() {
 	}else if(button2) {
 		can_tmr = 0;
 		for(i=0;i<FRAME_SIZE;i++) {
-			audio_stream[i] = wav_ex[wav_offset2]+0x8000;
-			audio_stream[i]*=0.2;
-			wav_offset2++;
-			if(wav_offset2>=sizeof(wav_ex)/2) wav_offset2 = 0;
-			add_audio_frame(audio_stream,FRAME_SIZE);
+			audio_stream[i] = call_ex[call_offset2];
+			audio_stream[i]*=0.1;
+			call_offset2++;
+			if(call_offset2>=sizeof(call_ex)/2) call_offset2 = 0;
 		}
+		add_audio_frame(audio_stream,FRAME_SIZE);
+
 	}else if(can_length) {
+		//HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 		can_tmr = 0;
 		res = opus_decode(dec,(unsigned char*)&can_buf[0],can_length,&audio_stream[0],1024,0);
 		if(res!=FRAME_SIZE) {add_empty_audio_frame();}
@@ -453,18 +467,26 @@ static void encode_work() {
 		  for(i=0;i<FRAME_SIZE;i++) {
 			  tmp_frame[i]  = SaturaLH((RecBuf[1][i] >>8), -32768, 32767);
 		  }
+		  encoded_length = opus_encode(enc, (opus_int16*)tmp_frame, FRAME_SIZE,(unsigned char*) &microphone_encoded_data[1][0], 256);
+		  if(encoded_length>0) {
+			  encoded_micr_ready_buf_num = 2;
+		  }
 
 	  }else if(button2) {
 		  for(i=0;i<FRAME_SIZE;i++) {
-			  tmp_frame[i] = wav_ex[wav_offset]+0x8000;
+			  /*tmp_frame[i] = wav_ex[wav_offset]+0x8000;
 			  wav_offset++;
-			  if(wav_offset>=sizeof(wav_ex)/2) wav_offset = 0;
+			  if(wav_offset>=sizeof(wav_ex)/2) wav_offset = 0;*/
+			  tmp_frame[i] = call_ex[call_offset];
+			  call_offset++;
+			  if(call_offset>=sizeof(call_ex)/2) call_offset = 0;
+		  }
+		  encoded_length = opus_encode(enc, (opus_int16*)tmp_frame, FRAME_SIZE,(unsigned char*) &microphone_encoded_data[1][0], 256);
+		  if(encoded_length>0) {
+			  encoded_micr_ready_buf_num = 2;
 		  }
 	  }
-	  encoded_length = opus_encode(enc, (opus_int16*)tmp_frame, FRAME_SIZE,(unsigned char*) &microphone_encoded_data[1][0], 256);
-	  if(encoded_length>0) {
-		  encoded_micr_ready_buf_num = 2;
-	  }
+
 	  DmaMicrophoneBuffCplt = 0;
 	}else if(DmaMicrophoneHalfBuffCplt) {
 
@@ -472,17 +494,25 @@ static void encode_work() {
 		  for(i=0;i<FRAME_SIZE;i++) {
 			  tmp_frame[i]  = SaturaLH((RecBuf[0][i] >>8), -32768, 32767);
 		  }
+		  encoded_length = opus_encode(enc, (opus_int16*)tmp_frame, FRAME_SIZE,(unsigned char*) &microphone_encoded_data[0][0], 256);
+		  if(encoded_length>0) {
+			  encoded_micr_ready_buf_num = 1;
+		  }
 	  }else if(button2) {
 		  for(i=0;i<FRAME_SIZE;i++) {
-			  tmp_frame[i] = wav_ex[wav_offset]+0x8000;
+			  /*tmp_frame[i] = wav_ex[wav_offset]+0x8000;
 			  wav_offset++;
-			  if(wav_offset>=sizeof(wav_ex)/2) wav_offset = 0;
+			  if(wav_offset>=sizeof(wav_ex)/2) wav_offset = 0;*/
+			  tmp_frame[i] = call_ex[call_offset];
+			  call_offset++;
+			  if(call_offset>=sizeof(call_ex)/2) call_offset = 0;
+		  }
+		  encoded_length = opus_encode(enc, (opus_int16*)tmp_frame, FRAME_SIZE,(unsigned char*) &microphone_encoded_data[0][0], 256);
+		  if(encoded_length>0) {
+			  encoded_micr_ready_buf_num = 1;
 		  }
 	  }
-	  encoded_length = opus_encode(enc, (opus_int16*)tmp_frame, FRAME_SIZE,(unsigned char*) &microphone_encoded_data[0][0], 256);
-	  if(encoded_length>0) {
-		  encoded_micr_ready_buf_num = 1;
-	  }
+
 	  DmaMicrophoneHalfBuffCplt = 0;
 	}
 }
@@ -540,6 +570,7 @@ int main(void)
   MX_CAN1_Init();
   MX_CAN2_Init();
   MX_USART1_UART_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 
   LL_DMA_EnableIT_TC(DMA2, LL_DMA_CHANNEL_6);
@@ -550,8 +581,10 @@ int main(void)
 
   //FIR_Init();
 
+  HAL_ADC_Start_DMA(&hadc1,(uint32_t*) &adc_data,2);
+
   enc = opus_encoder_create(8000, 1, OPUS_APPLICATION_RESTRICTED_LOWDELAY, &error);
-  opus_encoder_ctl(enc, OPUS_SET_COMPLEXITY(2));
+  opus_encoder_ctl(enc, OPUS_SET_COMPLEXITY(1));
   //opus_encoder_ctl(enc, OPUS_SET_BITRATE(8000));
   dec = opus_decoder_create(8000,1,&error);
 
@@ -649,6 +682,16 @@ int main(void)
 		  packet_tmr=0;
 		  can_caught_id = 0;
 	  }
+	  pow_data[0] = adc_data[0]*33.0/1025+0.5;
+	  pow_data[1] = adc_data[1]*33.0/1025+0.5;
+
+	  if(button2) {
+		  point_tmr = 0;
+		  point_flag = 0;
+	  }else {
+		  call_offset = 0;
+		  call_offset2 = 0;
+	  }
 
     /* USER CODE END WHILE */
 
@@ -696,17 +739,18 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_SAI1
-                              |RCC_PERIPHCLK_DFSDM1;
+                              |RCC_PERIPHCLK_DFSDM1|RCC_PERIPHCLK_ADC;
   PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
   PeriphClkInit.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLLSAI1;
+  PeriphClkInit.AdcClockSelection = RCC_ADCCLKSOURCE_PLLSAI1;
   PeriphClkInit.Dfsdm1ClockSelection = RCC_DFSDM1CLKSOURCE_PCLK;
   PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_HSE;
   PeriphClkInit.PLLSAI1.PLLSAI1M = 2;
   PeriphClkInit.PLLSAI1.PLLSAI1N = 43;
   PeriphClkInit.PLLSAI1.PLLSAI1P = RCC_PLLP_DIV7;
   PeriphClkInit.PLLSAI1.PLLSAI1Q = RCC_PLLQ_DIV2;
-  PeriphClkInit.PLLSAI1.PLLSAI1R = RCC_PLLR_DIV2;
-  PeriphClkInit.PLLSAI1.PLLSAI1ClockOut = RCC_PLLSAI1_SAI1CLK;
+  PeriphClkInit.PLLSAI1.PLLSAI1R = RCC_PLLR_DIV8;
+  PeriphClkInit.PLLSAI1.PLLSAI1ClockOut = RCC_PLLSAI1_SAI1CLK|RCC_PLLSAI1_ADC1CLK;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();

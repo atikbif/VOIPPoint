@@ -16,6 +16,7 @@ extern tx_stack can1_tx_stack;
 extern tx_stack can2_tx_stack;
 
 extern uint16_t discrete_state;
+extern uint8_t pow_data[2];
 
 
 void send_point_state(uint8_t can_num) {
@@ -28,9 +29,11 @@ void send_point_state(uint8_t can_num) {
 	p_id->cmd = POINT_STATE;
 	p_id->param = 0;
 	packet.priority = LOW_PACKET_PRIORITY;
-	packet.length = 2;
+	packet.length = 4;
 	packet.data[0] = discrete_state & 0xFF;
 	packet.data[1] = discrete_state >> 8;
+	packet.data[2] = pow_data[0];
+	packet.data[3] = pow_data[1];
 	// добавить состояние входов выходов
 	if(can_num==1) add_tx_can_packet(&can1_tx_stack,&packet);
 	else add_tx_can_packet(&can2_tx_stack,&packet);

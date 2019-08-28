@@ -71,10 +71,17 @@ uint16_t prev_discr_state = 0;
 uint16_t search_next_tmr = 0;
 uint8_t search_next_try = 0;
 extern uint8_t alarm_flag;
+extern uint16_t point_tmr;
+extern uint8_t point_flag;
+extern uint8_t button1;
+
+extern uint8_t prev_pow_data[2];
+extern uint8_t pow_data[2];
 
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern DMA_HandleTypeDef hdma_adc1;
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
 extern DMA_HandleTypeDef hdma_dac_ch1;
@@ -209,6 +216,7 @@ void SysTick_Handler(void)
   static uint16_t sec_tmr=0;
 
   can_write_from_stack();
+
   if(test_2_5_kHz_state) test_2_5_kHz_tmr++;
   search_next_tmr++;
   if(search_next_tmr>=100) {
@@ -218,8 +226,17 @@ void SysTick_Handler(void)
 	  sec_tmr++;
 	  if(sec_tmr>=10) {
 		  sec_tmr = 0;
+		  if(button1==0) point_tmr++;
+		  if(point_tmr>=600) {
+			  point_tmr = 0;
+			  point_flag = 0;
+		  }
+		  if(prev_pow_data[0]!=pow_data[0] || prev_pow_data[1]!=pow_data[1] || alarm_flag) {
+			  send_point_state(1);
+		  }
+		  prev_pow_data[0] = pow_data[0];
+		  prev_pow_data[1] = pow_data[1];
 		  if(search_next_try>=3) { last_point(); }
-		  if(alarm_flag) {send_point_state(1);HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);}
 	  }
   }
   i++;
@@ -301,6 +318,20 @@ void SysTick_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32l4xx.s).                    */
 /******************************************************************************/
+
+/**
+  * @brief This function handles DMA1 channel1 global interrupt.
+  */
+void DMA1_Channel1_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
+
+  /* USER CODE END DMA1_Channel1_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_adc1);
+  /* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
+
+  /* USER CODE END DMA1_Channel1_IRQn 1 */
+}
 
 /**
   * @brief This function handles DMA1 channel3 global interrupt.
