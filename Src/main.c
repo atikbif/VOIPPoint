@@ -653,13 +653,9 @@ int main(void)
 				  }else {
 					  discrete_state &= ~(0x0001);
 				  }
-				  if(button3) {
-					  discrete_state |= 0x0080;
-				  }else {
-					  discrete_state &= ~(0x0080);
-				  }
-				  send_point_state(1);
 				  check_cmd = 0;
+				  discrete_state |= 0x0002;	// была выполнена проверка
+				  send_point_state(1);
 			  }
 		  }
 
