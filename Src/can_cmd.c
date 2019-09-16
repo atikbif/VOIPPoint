@@ -14,6 +14,8 @@ extern uint8_t test_2_5_kHz_res;
 
 extern tx_stack can1_tx_stack;
 extern tx_stack can2_tx_stack;
+extern tx_stack can1_tx_stack_pr;
+extern tx_stack can2_tx_stack_pr;
 
 extern uint16_t discrete_state;
 extern uint8_t pow_data[2];
@@ -28,15 +30,15 @@ void send_point_state(uint8_t can_num) {
 	p_id->group_addr = group_id;
 	p_id->cmd = POINT_STATE;
 	p_id->param = 0;
-	packet.priority = LOW_PACKET_PRIORITY;
+	packet.priority = HIGH_PACKET_PRIORITY;
 	packet.length = 4;
 	packet.data[0] = discrete_state & 0xFF;
 	packet.data[1] = discrete_state >> 8;
 	packet.data[2] = pow_data[0];
 	packet.data[3] = pow_data[1];
 	// добавить состояние входов выходов
-	if(can_num==1) add_tx_can_packet(&can1_tx_stack,&packet);
-	else add_tx_can_packet(&can2_tx_stack,&packet);
+	if(can_num==1) add_tx_can_packet(&can1_tx_stack_pr,&packet);
+	else add_tx_can_packet(&can2_tx_stack_pr,&packet);
 }
 
 void next_point(uint8_t t) {
@@ -48,11 +50,11 @@ void next_point(uint8_t t) {
 	p_id->group_addr = group_id;
 	p_id->cmd = FIND_NEXT_POINT;
 	p_id->param = t;
-	packet.priority = LOW_PACKET_PRIORITY;
+	packet.priority = HIGH_PACKET_PRIORITY;
 	packet.length = 1;
 	packet.data[0] = pos_in_group;
-	if(t==1) add_tx_can_packet(&can2_tx_stack,&packet);	// request
-	else add_tx_can_packet(&can1_tx_stack,&packet);	// answer
+	if(t==1) add_tx_can_packet(&can2_tx_stack_pr,&packet);	// request
+	else add_tx_can_packet(&can1_tx_stack_pr,&packet);	// answer
 }
 
 void last_point() {
@@ -64,7 +66,7 @@ void last_point() {
 	p_id->group_addr = group_id;
 	p_id->cmd = LAST_POINT;
 	p_id->param = 0;
-	packet.priority = LOW_PACKET_PRIORITY;
+	packet.priority = HIGH_PACKET_PRIORITY;
 	packet.length = 0;
-	add_tx_can_packet(&can1_tx_stack,&packet);
+	add_tx_can_packet(&can1_tx_stack_pr,&packet);
 }

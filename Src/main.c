@@ -122,6 +122,8 @@ uint32_t call_offset2 = 0;
 
 tx_stack can1_tx_stack;
 tx_stack can2_tx_stack;
+tx_stack can1_tx_stack_pr;
+tx_stack can2_tx_stack_pr;
 
 uint8_t button1 = 0;
 uint8_t button2 = 0;
@@ -152,6 +154,9 @@ uint8_t point_flag = 0;
 uint16_t point_tmr = 0;
 
 uint16_t adc_data[2] = {0,0};
+uint32_t sum_adc[2] ={0,0};
+uint16_t adc_filter_tmr = 0;
+
 uint8_t prev_pow_data[2] = {0,0};
 uint8_t pow_data[2] = {0,0};
 
@@ -260,13 +265,17 @@ static void check_can_rx(uint8_t can_num) {
 						}
 					}
 				}
+			}else if(p_id->cmd==LAST_POINT) {
+				if(p_id->group_addr == group_id) {
+					search_next_try = 0;	// ответ от следующей в цепочке точки
+				}
 			}else if(p_id->cmd==FIND_NEXT_POINT) {
-					if(p_id->param==FIND_REQUEST) {	// запрос от предыдущей в цепочке точки
-						pos_in_group = RxData[0] + 1;
-						next_point(FIND_ANSWER);	// отправить ответ
-					}else if(p_id->param==FIND_ANSWER) {
-						search_next_try = 0;	// ответ от следующей в цепочке точки
-					}
+				if(p_id->param==FIND_REQUEST) {	// запрос от предыдущей в цепочке точки
+					pos_in_group = RxData[0] + 1;
+					next_point(FIND_ANSWER);	// отправить ответ
+				}else if(p_id->param==FIND_ANSWER) {
+					search_next_try = 0;	// ответ от следующей в цепочке точки
+				}
 			}else if(p_id->cmd==SCAN_GROUP) {
 				if(can_num==1) {	// транслировать запрос сканирования дальше
 					check_cmd = 1;	// запустить проверку точки
@@ -288,11 +297,18 @@ static void check_can_rx(uint8_t can_num) {
 
 			if(!(p_id->point_addr == pos_in_group && p_id->group_addr == group_id)) {
 				packet.id = RxHeader.ExtId;
-				packet.priority = LOW_PACKET_PRIORITY;
+				if(p_id->cmd==AUDIO_PACKET) packet.priority = LOW_PACKET_PRIORITY;
+				else packet.priority = HIGH_PACKET_PRIORITY;
 				packet.length = RxHeader.DLC;
 				for(i=0;i<packet.length;++i) packet.data[i] = RxData[i];
-				if(can_num==1)	add_tx_can_packet(&can2_tx_stack,&packet);
-				else add_tx_can_packet(&can1_tx_stack,&packet);
+				if(can_num==1)	{
+					if(packet.priority == LOW_PACKET_PRIORITY) add_tx_can_packet(&can2_tx_stack,&packet);
+					else add_tx_can_packet(&can2_tx_stack_pr,&packet);
+				}
+				else {
+					if(packet.priority == LOW_PACKET_PRIORITY) add_tx_can_packet(&can1_tx_stack,&packet);
+					else add_tx_can_packet(&can1_tx_stack_pr,&packet);
+				}
 			}
 		}
 
@@ -303,7 +319,17 @@ void can_write_from_stack() {
 	tx_stack_data packet;
 	uint8_t i = 0;
 	while(HAL_CAN_GetTxMailboxesFreeLevel(&hcan1)!=0) {
-
+		if(get_tx_can_packet(&can1_tx_stack_pr,&packet)) {
+			TxHeader.StdId = 0;
+			TxHeader.ExtId = packet.id;
+			TxHeader.RTR = CAN_RTR_DATA;
+			TxHeader.IDE = CAN_ID_EXT;
+			TxHeader.TransmitGlobalTime = DISABLE;
+			TxHeader.DLC = packet.length;
+			for(i=0;i<packet.length;++i) TxData[i] = packet.data[i];
+			HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox1);
+			continue;
+		}
 		if(get_tx_can_packet(&can1_tx_stack,&packet)) {
 			TxHeader.StdId = 0;
 			TxHeader.ExtId = packet.id;
@@ -316,6 +342,18 @@ void can_write_from_stack() {
 		}else break;
 	}
 	while(HAL_CAN_GetTxMailboxesFreeLevel(&hcan2)!=0) {
+		if(get_tx_can_packet(&can2_tx_stack_pr,&packet)) {
+			TxHeader.IDE = CAN_ID_EXT;
+			TxHeader.StdId = 0;
+			TxHeader.ExtId = packet.id;
+			TxHeader.RTR = CAN_RTR_DATA;
+			TxHeader.IDE = CAN_ID_EXT;
+			TxHeader.TransmitGlobalTime = DISABLE;
+			TxHeader.DLC = packet.length;
+			for(i=0;i<packet.length;++i) TxData[i] = packet.data[i];
+			HAL_CAN_AddTxMessage(&hcan2, &TxHeader, TxData, &TxMailbox2);
+			continue;
+		}
 		if(get_tx_can_packet(&can2_tx_stack,&packet)) {
 			TxHeader.IDE = CAN_ID_EXT;
 			TxHeader.StdId = 0;
@@ -607,6 +645,8 @@ int main(void)
 
   init_can_tx_stack(&can1_tx_stack);
   init_can_tx_stack(&can2_tx_stack);
+  init_can_tx_stack(&can1_tx_stack_pr);
+  init_can_tx_stack(&can2_tx_stack_pr);
 
   /* USER CODE END 2 */
 
@@ -678,8 +718,17 @@ int main(void)
 		  packet_tmr=0;
 		  can_caught_id = 0;
 	  }
-	  pow_data[0] = adc_data[0]*33.0/1025+0.5;
-	  pow_data[1] = adc_data[1]*33.0/1025+0.5;
+	  sum_adc[0]+=adc_data[0];
+	  sum_adc[1]+=adc_data[1];
+	  adc_filter_tmr++;
+	  if(adc_filter_tmr>=32) {
+		  adc_filter_tmr=0;
+		  pow_data[0] = (double)sum_adc[0]*33/1025/32+0.5;
+		  pow_data[1] = (double)sum_adc[1]*33/1025/32+0.5;
+		  sum_adc[0]=0;
+		  sum_adc[1]=0;
+	  }
+
 
 	  if(button2) {
 		  point_tmr = 0;

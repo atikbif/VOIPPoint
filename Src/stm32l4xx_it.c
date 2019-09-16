@@ -221,8 +221,9 @@ void SysTick_Handler(void)
   search_next_tmr++;
   if(search_next_tmr>=100) {
 	  search_next_tmr = 0;
+	  if(search_next_try>=10) { last_point(); }
 	  next_point(FIND_REQUEST);
-	  if(search_next_try<3) search_next_try++;
+	  if(search_next_try<10) search_next_try++;
 	  sec_tmr++;
 	  if(sec_tmr>=10) {
 		  sec_tmr = 0;
@@ -236,7 +237,7 @@ void SysTick_Handler(void)
 		  }
 		  prev_pow_data[0] = pow_data[0];
 		  prev_pow_data[1] = pow_data[1];
-		  if(search_next_try>=3) { last_point(); }
+
 	  }
   }
   i++;
