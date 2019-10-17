@@ -42,6 +42,8 @@
 #include <stdlib.h>
 #include <arm_math.h>
 #include "can_cmd.h"
+#include "eeprom.h"
+#include "eeprom2.h"
 
 /* USER CODE END Includes */
 
@@ -67,6 +69,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+
+static FLASH_EraseInitTypeDef EraseInitStruct;
+uint32_t PAGEError = 0;
 
 volatile int32_t		RecBuf[2][FRAME_SIZE];
 uint16_t 	conv[2][FRAME_SIZE];
@@ -160,6 +165,8 @@ uint16_t adc_filter_tmr = 0;
 uint8_t prev_pow_data[2] = {0,0};
 uint8_t pow_data[2] = {0,0};
 
+uint64_t gain = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -171,6 +178,37 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+static uint32_t GetPage(uint32_t Addr)
+{
+  uint32_t page = 0;
+  if (Addr < (FLASH_BASE + FLASH_BANK_SIZE))  {
+	  /* Bank 1 */
+	  page = (Addr - FLASH_BASE) / FLASH_PAGE_SIZE;
+  }
+  else {
+	  /* Bank 2 */
+	  page = (Addr - (FLASH_BASE + FLASH_BANK_SIZE)) / FLASH_PAGE_SIZE;
+  }
+  return page;
+}
+
+static uint32_t GetBank(uint32_t Addr)
+{
+  uint32_t bank = 0;
+  if (READ_BIT(SYSCFG->MEMRMP, SYSCFG_MEMRMP_FB_MODE) == 0)
+  {
+  	/* No Bank swap */
+    if (Addr < (FLASH_BASE + FLASH_BANK_SIZE))  {bank = FLASH_BANK_1;}
+    else {bank = FLASH_BANK_2;}
+  }
+  else
+  {
+  	/* Bank swap */
+    if (Addr < (FLASH_BASE + FLASH_BANK_SIZE)) {bank = FLASH_BANK_2;}
+    else {bank = FLASH_BANK_1;}
+  }
+  return bank;
+}
 
 uint8_t static check_id_priority(uint32_t packet_id) {
 	id_field *input_id = (id_field*)(&packet_id);
@@ -235,7 +273,6 @@ static void check_can_rx(uint8_t can_num) {
 	if(can_num==1) hcan = &hcan1; else hcan = &hcan2;
 	if(HAL_CAN_GetRxFifoFillLevel(hcan, CAN_RX_FIFO0)) {
 		if(HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK) {
-
 			p_id = (id_field*)(&(RxHeader.ExtId));
 			if(p_id->cmd==AUDIO_PACKET) { // аудиопоток
 
@@ -245,7 +282,7 @@ static void check_can_rx(uint8_t can_num) {
 					cnt = (p_id->param & 0xFF)>> 4;
 					if(cur_num) {
 						if(cur_num==cnt) {
-						  HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+						  //HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 						  if(p_id->type==POINT_TO_ALL || p_id->type==PC_TO_ALL || p_id->type==PC_TO_POINT) { // точка все
 							  j = (cur_num-1)*8;
 							  for(i=0;i<RxHeader.DLC;i++) {
@@ -289,6 +326,29 @@ static void check_can_rx(uint8_t can_num) {
 					}
 				}
 			}else if(p_id->cmd==GET_POINTS_STATE) {
+				group_id = p_id ->group_addr;
+				send_point_state(1);
+			}else if(p_id->cmd==GATE_STATE) {
+				if(can_num==1) {
+					group_id = p_id ->group_addr;
+				}
+			}else if(p_id->point_addr == pos_in_group && p_id->group_addr == group_id && p_id->cmd==BOOT) {
+				if(p_id->type==BOOT_SWITCH) {
+					HAL_FLASH_Unlock();
+					EraseInitStruct.TypeErase   = FLASH_TYPEERASE_PAGES;
+					EraseInitStruct.Banks       = GetBank((uint32_t)0x08080000);
+					EraseInitStruct.Page        = GetPage((uint32_t)0x08080000);
+					EraseInitStruct.NbPages     = 1;
+					HAL_FLASHEx_Erase(&EraseInitStruct, &PAGEError);
+					HAL_NVIC_SystemReset();
+				}
+			}
+			else if(p_id->point_addr == pos_in_group && p_id->group_addr == group_id && p_id->cmd==POINT_CONFIG) {
+				HAL_FLASH_Unlock();
+				if(RxData[0]>4) RxData[0]=0;
+				gain = RxData[0];
+				write_var2(RxData[0]);
+				send_point_state(1);
 				send_point_state(1);
 			}
 			if(p_id->group_addr == group_id) {
@@ -296,6 +356,7 @@ static void check_can_rx(uint8_t can_num) {
 			}
 
 			if(!(p_id->point_addr == pos_in_group && p_id->group_addr == group_id)) {
+				//if(p_id->cmd==POINT_STATE) HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 				packet.id = RxHeader.ExtId;
 				if(p_id->cmd==AUDIO_PACKET) packet.priority = LOW_PACKET_PRIORITY;
 				else packet.priority = HIGH_PACKET_PRIORITY;
@@ -411,7 +472,6 @@ static void send_full_frame(uint8_t len, uint8_t *ptr) {
 	}
 	i=1;
 	while(cur_pckt<=pckt_cnt) {
-		p_id->unused_bits = 0;
 		if(point_flag==0) p_id->type = POINT_TO_ALL;
 		else p_id->type = POINT_TO_PC;
 		p_id->point_addr = pos_in_group;
@@ -563,7 +623,7 @@ static void convert(uint8_t num) {
 	}else {
 		//HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 		for(i=0;i<FRAME_SIZE;i++) {
-			conv[num][i] = tmp_frame[i] + 32768;
+			conv[num][i] = ((tmp_frame[i]>>gain) + 32768);
 		}
 	}
 }
@@ -579,6 +639,7 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
 	uint16_t i = 0;
+	uint16_t led_cnt = 0;
 
   /* USER CODE END 1 */
   
@@ -596,6 +657,19 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
+
+  HAL_Delay(400);
+  HAL_FLASH_Unlock();
+  __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_OPTVERR);
+
+  init_eeprom();
+  write_var(0);
+  init_eeprom2();
+  gain = read_var2();
+  if(gain>3) {
+	  gain=0;
+	  write_var2(0);
+  }
 
   /* USER CODE END SysInit */
 
@@ -615,7 +689,7 @@ int main(void)
   LL_DMA_EnableIT_TE(DMA2, LL_DMA_CHANNEL_6);
   LL_USART_EnableIT_RXNE(USART1);
 
-  HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_SET);
+  HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_RESET);
 
   //FIR_Init();
 
@@ -657,6 +731,8 @@ int main(void)
 
   DmaMicrophoneBuffCplt=0;
   while(DmaMicrophoneBuffCplt==0);
+
+  send_point_state(1);
 
   while (1)
   {
@@ -715,16 +791,20 @@ int main(void)
 	  can_work();
 	  uart1_scan();
 	  if(packet_tmr>=500) {
-		  packet_tmr=0;
+		  //packet_tmr=0;
 		  can_caught_id = 0;
-	  }
+		  if(button2 || test_2_5_kHz_state) HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_SET);
+		  else HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_RESET);
+	  }else HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_SET);
 	  sum_adc[0]+=adc_data[0];
 	  sum_adc[1]+=adc_data[1];
 	  adc_filter_tmr++;
 	  if(adc_filter_tmr>=32) {
 		  adc_filter_tmr=0;
-		  pow_data[0] = (double)sum_adc[0]*33/1025/32+0.5;
-		  pow_data[1] = (double)sum_adc[1]*33/1025/32+0.5;
+		  //pow_data[0] = (double)sum_adc[0]*33/1025/32+0.5;
+		  //pow_data[1] = (double)sum_adc[1]*33/1025/32+0.5;
+		  pow_data[0] = (double)sum_adc[0]*33/1016/32+0.5;
+		  pow_data[1] = (double)sum_adc[1]*33/1016/32+6.5;
 		  sum_adc[0]=0;
 		  sum_adc[1]=0;
 	  }
@@ -737,6 +817,10 @@ int main(void)
 		  call_offset = 0;
 		  call_offset2 = 0;
 	  }
+	  if(led_cnt<100) HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
+	  else HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_RESET);
+	  led_cnt++;if(led_cnt>=65000) led_cnt=0;
+	  HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);
 
     /* USER CODE END WHILE */
 

@@ -241,7 +241,7 @@ void SysTick_Handler(void)
 	  }
   }
   i++;
-  packet_tmr++;
+  if(packet_tmr<500) packet_tmr++;
   if(prev_discr_state != discrete_state) {
 	  send_point_state(1);
   }

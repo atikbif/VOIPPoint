@@ -10,13 +10,8 @@
 
 #include <stdint.h>
 
-#define		UNKNOWN_TYPE	0
-#define		PC_TO_ALL		1
-#define		PC_TO_GROUP		2
-#define		PC_TO_POINT		3
-#define		POINT_TO_ALL	4
-#define		POINT_TO_PC		5
-#define		UNUSED_TYPE		6
+#define		FIND_REQUEST	1
+#define		FIND_ANSWER		2
 
 #define		AUDIO_PACKET		1
 #define		FIND_NEXT_POINT		2
@@ -26,9 +21,28 @@
 #define		LAST_POINT			6
 #define		SET_ALL_OUTS		7
 #define		GET_POINTS_STATE	8
+#define		GATE_STATE			9
+#define		BOOT				10
+#define		POINT_CONFIG		11
 
-#define		FIND_REQUEST	1
-#define		FIND_ANSWER		2
+// AUDIO
+
+#define		UNKNOWN_TYPE		0
+#define		PC_TO_ALL			1
+#define		PC_TO_GROUP			2
+#define		PC_TO_POINT			3
+#define		POINT_TO_ALL		4
+#define		POINT_TO_PC			5
+#define		UNUSED_TYPE			6
+
+// BOOT
+
+#define		BOOT_WRITE_HEADER		0
+#define		BOOT_WRITE_ACK			1
+#define		BOOT_WRITE_DATA			2
+#define		BOOT_ERASE_PAGE_REQ		3
+#define		BOOT_ERASE_PAGE_ACK		4
+#define		BOOT_SWITCH				5
 
 typedef struct
 {
@@ -37,7 +51,7 @@ typedef struct
  uint32_t group_addr: 7;
  uint32_t point_addr: 7;
  uint32_t type: 3;
- uint32_t unused_bits : 3;
+ uint32_t unused_types:	3;
 } id_field;
 
 void send_point_state(uint8_t can_num);
