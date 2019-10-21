@@ -25,6 +25,7 @@
 /* USER CODE BEGIN Includes */
 #include "uart.h"
 #include "can_cmd.h"
+#include "rng.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -77,6 +78,7 @@ extern uint8_t button1;
 
 extern uint8_t prev_pow_data[2];
 extern uint8_t pow_data[2];
+extern RNG_HandleTypeDef hrng;
 
 /* USER CODE END 0 */
 
@@ -214,6 +216,12 @@ void SysTick_Handler(void)
   static uint16_t i=0;
   static uint8_t state = 0;
   static uint16_t sec_tmr=0;
+  static uint32_t upd_tmr = 0;
+
+  if(upd_tmr==0) {
+	  upd_tmr = HAL_RNG_GetRandomNumber(&hrng) & 0x0F;
+	  send_point_state(1);
+  }
 
   can_write_from_stack();
 
@@ -226,6 +234,8 @@ void SysTick_Handler(void)
 	  if(search_next_try<10) search_next_try++;
 	  sec_tmr++;
 	  if(sec_tmr>=10) {
+		  if(upd_tmr) upd_tmr--;
+
 		  sec_tmr = 0;
 		  if(button1==0) point_tmr++;
 		  if(point_tmr>=600) {

@@ -25,6 +25,7 @@
 #include "dac.h"
 #include "dfsdm.h"
 #include "dma.h"
+#include "rng.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -109,7 +110,7 @@ static uint8_t				 can_frame[OPUS_PACKET_MAX_LENGTH];
 static uint8_t 				 can_priority_frame[OPUS_PACKET_MAX_LENGTH];
 static uint32_t				 can_caught_id = 0;
 uint16_t can_tmr = 0;
-uint8_t group_id = 1;
+uint8_t group_id = 0;
 unsigned short gate_id = 0xFE;
 unsigned short point_to_point_tmr = 0x00;
 uint16_t packet_tmr = 0;
@@ -275,7 +276,6 @@ static void check_can_rx(uint8_t can_num) {
 		if(HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK) {
 			p_id = (id_field*)(&(RxHeader.ExtId));
 			if(p_id->cmd==AUDIO_PACKET) { // аудиопоток
-
 				if(button1==0 && button2==0 && check_id_priority(RxHeader.ExtId)) {
 					packet_tmr = 0;
 					cur_num = p_id->param & 0x0F;
@@ -283,7 +283,7 @@ static void check_can_rx(uint8_t can_num) {
 					if(cur_num) {
 						if(cur_num==cnt) {
 						  //HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
-						  if(p_id->type==POINT_TO_ALL || p_id->type==PC_TO_ALL || p_id->type==PC_TO_POINT) { // точка все
+						  if(p_id->type==POINT_TO_ALL || p_id->type==PC_TO_ALL || p_id->type==PC_TO_POINT || p_id->type==PC_TO_GROUP) { // точка все
 							  j = (cur_num-1)*8;
 							  for(i=0;i<RxHeader.DLC;i++) {
 								  if(j+i<OPUS_PACKET_MAX_LENGTH) can_priority_frame[j+i]=RxData[i];
@@ -354,11 +354,12 @@ static void check_can_rx(uint8_t can_num) {
 			if(p_id->group_addr == group_id) {
 				if(p_id->cmd==FIND_NEXT_POINT) return;
 			}
-
+			//if(p_id->cmd==AUDIO_PACKET && p_id->point_addr==0x00) {HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);}
 			if(!(p_id->point_addr == pos_in_group && p_id->group_addr == group_id)) {
+
 				//if(p_id->cmd==POINT_STATE) HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 				packet.id = RxHeader.ExtId;
-				if(p_id->cmd==AUDIO_PACKET) packet.priority = LOW_PACKET_PRIORITY;
+				if(p_id->cmd==AUDIO_PACKET) {packet.priority = LOW_PACKET_PRIORITY;}
 				else packet.priority = HIGH_PACKET_PRIORITY;
 				packet.length = RxHeader.DLC;
 				for(i=0;i<packet.length;++i) packet.data[i] = RxData[i];
@@ -683,6 +684,7 @@ int main(void)
   MX_CAN2_Init();
   MX_USART1_UART_Init();
   MX_ADC1_Init();
+  MX_RNG_Init();
   /* USER CODE BEGIN 2 */
 
   LL_DMA_EnableIT_TC(DMA2, LL_DMA_CHANNEL_6);
@@ -841,8 +843,13 @@ void SystemClock_Config(void)
 
   /** Initializes the CPU, AHB and APB busses clocks 
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE|RCC_OSCILLATORTYPE_LSE
+                              |RCC_OSCILLATORTYPE_MSI;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.LSEState = RCC_LSE_OFF;
+  RCC_OscInitStruct.MSIState = RCC_MSI_ON;
+  RCC_OscInitStruct.MSICalibrationValue = 0;
+  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 2;
@@ -868,11 +875,13 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_SAI1
-                              |RCC_PERIPHCLK_DFSDM1|RCC_PERIPHCLK_ADC;
+                              |RCC_PERIPHCLK_DFSDM1|RCC_PERIPHCLK_RNG
+                              |RCC_PERIPHCLK_ADC;
   PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
   PeriphClkInit.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLLSAI1;
   PeriphClkInit.AdcClockSelection = RCC_ADCCLKSOURCE_PLLSAI1;
   PeriphClkInit.Dfsdm1ClockSelection = RCC_DFSDM1CLKSOURCE_PCLK;
+  PeriphClkInit.RngClockSelection = RCC_RNGCLKSOURCE_MSI;
   PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_HSE;
   PeriphClkInit.PLLSAI1.PLLSAI1M = 2;
   PeriphClkInit.PLLSAI1.PLLSAI1N = 43;
@@ -890,6 +899,9 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+  /** Enable MSI Auto calibration 
+  */
+  HAL_RCCEx_EnableMSIPLLMode();
 }
 
 /* USER CODE BEGIN 4 */
