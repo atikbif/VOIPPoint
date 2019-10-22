@@ -17,34 +17,6 @@ static uint32_t PAGEError = 0;
 
 static FLASH_EraseInitTypeDef EraseInitStruct;
 
-/*static uint32_t GetPage(uint32_t Addr)
-{
-  uint32_t page = 0;
-  if (Addr < (FLASH_BASE + FLASH_BANK_SIZE))  {
-	  page = (Addr - FLASH_BASE) / FLASH_PAGE_SIZE;
-  }
-  else {
-	  page = (Addr - (FLASH_BASE + FLASH_BANK_SIZE)) / FLASH_PAGE_SIZE;
-  }
-  return page;
-}
-
-static uint32_t GetBank(uint32_t Addr)
-{
-  uint32_t bank = 0;
-  if (READ_BIT(SYSCFG->MEMRMP, SYSCFG_MEMRMP_FB_MODE) == 0)
-  {
-    if (Addr < (FLASH_BASE + FLASH_BANK_SIZE))  {bank = FLASH_BANK_1;}
-    else {bank = FLASH_BANK_2;}
-  }
-  else
-  {
-    if (Addr < (FLASH_BASE + FLASH_BANK_SIZE)) {bank = FLASH_BANK_2;}
-    else {bank = FLASH_BANK_1;}
-  }
-  return bank;
-}*/
-
 static uint8_t find_last_written_var_addr(uint16_t* var_addr) {
 	uint64_t word1, word2;
 	uint8_t res = 0;

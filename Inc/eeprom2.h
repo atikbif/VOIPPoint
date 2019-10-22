@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include "main.h"
 
+// переменная для настройки громкости точки
+
 uint8_t  init_eeprom2();
 uint64_t read_var2();
 void write_var2(uint64_t value);

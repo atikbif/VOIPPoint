@@ -25,7 +25,7 @@
 #define		BOOT				10
 #define		POINT_CONFIG		11
 
-// AUDIO
+// AUDIO TYPES
 
 #define		UNKNOWN_TYPE		0
 #define		PC_TO_ALL			1
@@ -35,7 +35,7 @@
 #define		POINT_TO_PC			5
 #define		UNUSED_TYPE			6
 
-// BOOT
+// BOOT TYPES
 
 #define		BOOT_WRITE_HEADER		0
 #define		BOOT_WRITE_ACK			1
@@ -43,6 +43,8 @@
 #define		BOOT_ERASE_PAGE_REQ		3
 #define		BOOT_ERASE_PAGE_ACK		4
 #define		BOOT_SWITCH				5
+
+// CAN extended id bit structure
 
 typedef struct
 {

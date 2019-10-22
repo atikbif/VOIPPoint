@@ -33,8 +33,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
-#include "fit_processing.h"
-#include "arm_math.h"
+//#include "arm_math.h"
 #include "wave_example.h"
 #include "frame_stack.h"
 #include "opus.h"
@@ -45,6 +44,7 @@
 #include "can_cmd.h"
 #include "eeprom.h"
 #include "eeprom2.h"
+#include "flash_interface.h"
 
 /* USER CODE END Includes */
 
@@ -58,7 +58,7 @@
 
 #define	FRAME_SIZE	160
 #define SaturaLH(N, L, H) (((N)<(L))?(L):(((N)>(H))?(H):(N)))
-#define FFT_SIZE 128//указываем размер FFT
+#define FFT_SIZE 128//указываем размер FFT (быстрое преобразование Фурье)
 
 /* USER CODE END PD */
 
@@ -83,8 +83,6 @@ volatile uint32_t    DmaMicrophoneBuffCplt      = 0;
 volatile uint32_t	DmaDacHalfBuffCplt  = 0;
 volatile uint32_t    DmaDacBuffCplt      = 0;
 
-uint32_t ex_offset = 0;
-
 extern DAC_HandleTypeDef hdac1;
 extern CAN_HandleTypeDef hcan1;
 
@@ -104,45 +102,36 @@ static uint8_t               TxData[8];
 static CAN_RxHeaderTypeDef   RxHeader;
 static uint8_t               RxData[8];
 static uint8_t				 can_frame[OPUS_PACKET_MAX_LENGTH];
-//static uint8_t				 can_frame_id[256][40];
-
-
 static uint8_t 				 can_priority_frame[OPUS_PACKET_MAX_LENGTH];
 static uint32_t				 can_caught_id = 0;
-uint16_t can_tmr = 0;
-uint8_t group_id = 0;
-unsigned short gate_id = 0xFE;
-unsigned short point_to_point_tmr = 0x00;
-uint16_t packet_tmr = 0;
-unsigned char to_id = 0xFF;
+
+uint8_t group_id = 0;	// номер группы/шлюза к которой принадлежит точка
+uint16_t packet_tmr = 0;	// таймер активности звукового выхода
 uint8_t can_pckt_length = 0;
-uint16_t p_cnt = 0;
 
 unsigned char encoded_micr_ready_buf_num = 0;
 
-uint32_t wav_offset = 0;
-uint32_t wav_offset2 = 0;
 uint32_t sin_offset = 0;
 uint32_t call_offset = 0;
 uint32_t call_offset2 = 0;
 
 tx_stack can1_tx_stack;
 tx_stack can2_tx_stack;
-tx_stack can1_tx_stack_pr;
+tx_stack can1_tx_stack_pr;	// буфера с повышенным приоритетом для передачи
 tx_stack can2_tx_stack_pr;
 
 uint8_t button1 = 0;
 uint8_t button2 = 0;
 uint8_t button3 = 0;
 
+// группа переменных для проверки исправности микрофона и динамиков
+
 float32_t in_fft[FFT_SIZE] = {0};
 float32_t out_fft[FFT_SIZE] = {0};
 arm_rfft_fast_instance_f32 S;
-//float32_t maxvalue;
-//uint32_t maxindex;
 
-float32_t base_2_5_kHz_level;
-float32_t test_2_5_kHz_level;
+float32_t base_2_5_kHz_level;		// уровень фонового сигнала микрофона на 2.5 кГц
+float32_t test_2_5_kHz_level;		// уровень сигнала микрофона на 2.5 кГц во время проверки динамиков
 
 volatile uint16_t test_2_5_kHz_tmr = 0;
 uint8_t test_2_5_kHz_res = 0;
@@ -150,23 +139,46 @@ uint8_t test_2_5_kHz_state = 0;
 uint8_t test_2_5_kHz_check_enable = 0;
 uint8_t check_cmd = 0;
 
-uint8_t pos_in_group = 1;
-extern uint8_t search_next_try;
 
-uint16_t discrete_state = 0;
+uint8_t pos_in_group = 1;			// номер точки в цепочке шлюза
+extern uint8_t search_next_try;		// номер попытки поиска следующей точки
+
+uint16_t discrete_state = 0;	// битовое состояние точки
+// младший байт:
+// бит 0 - результат проверки микрофона/динамиков
+// бит 1  - была ли проверка
+//старший байт:
+// бит 0 - вход 1 замкнут
+// бит 1 - вход 1 обрыв
+// бит 2 - вход 1 кз
+// бит 3 - вход 2 замкнут
+// бит 4 - вход 2 обрыв
+// бит 5 - вход 2 кз
+// бит 6 - выход 1
+// бит 7 - выход 2
+
+// авария точки (если вход 1 разомкнут или по нему есть обрыв или кз)
 uint8_t alarm_flag = 0;
 
+// флаг и таймер для отправления данных компьютеру а не всем точкам при вызове от компьютера
 uint8_t point_flag = 0;
 uint16_t point_tmr = 0;
 
-uint16_t adc_data[2] = {0,0};
-uint32_t sum_adc[2] ={0,0};
+
+// переменные для ацп
+uint16_t adc_data[2] = {0,0};	// непосредственно данные
+uint32_t sum_adc[2] ={0,0};		// массив для усреднения
 uint16_t adc_filter_tmr = 0;
 
+// данные пересчитанные в десятые доли вольт
 uint8_t prev_pow_data[2] = {0,0};
 uint8_t pow_data[2] = {0,0};
 
-uint64_t gain = 0;
+uint64_t gain = 0; // текущий уровень громкости
+// 0 - максимальная
+// 1 - ослабление в 2 раза
+// 2 - в 4 раза
+// 3 - в 8 раз
 
 /* USER CODE END PV */
 
@@ -179,38 +191,7 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-static uint32_t GetPage(uint32_t Addr)
-{
-  uint32_t page = 0;
-  if (Addr < (FLASH_BASE + FLASH_BANK_SIZE))  {
-	  /* Bank 1 */
-	  page = (Addr - FLASH_BASE) / FLASH_PAGE_SIZE;
-  }
-  else {
-	  /* Bank 2 */
-	  page = (Addr - (FLASH_BASE + FLASH_BANK_SIZE)) / FLASH_PAGE_SIZE;
-  }
-  return page;
-}
-
-static uint32_t GetBank(uint32_t Addr)
-{
-  uint32_t bank = 0;
-  if (READ_BIT(SYSCFG->MEMRMP, SYSCFG_MEMRMP_FB_MODE) == 0)
-  {
-  	/* No Bank swap */
-    if (Addr < (FLASH_BASE + FLASH_BANK_SIZE))  {bank = FLASH_BANK_1;}
-    else {bank = FLASH_BANK_2;}
-  }
-  else
-  {
-  	/* Bank swap */
-    if (Addr < (FLASH_BASE + FLASH_BANK_SIZE)) {bank = FLASH_BANK_2;}
-    else {bank = FLASH_BANK_1;}
-  }
-  return bank;
-}
-
+// проверка необходимо ли воспроизводить пришедший аудиопакет
 uint8_t static check_id_priority(uint32_t packet_id) {
 	id_field *input_id = (id_field*)(&packet_id);
 	id_field *cur_id = (id_field*)(&can_caught_id);
@@ -263,6 +244,7 @@ uint8_t static check_id_priority(uint32_t packet_id) {
 	return 0;
 }
 
+// обработка входящих кан пакетов (can_num (1-входящий, 2-исходящий))
 static void check_can_rx(uint8_t can_num) {
 	CAN_HandleTypeDef *hcan;
 	uint8_t i = 0;
@@ -282,7 +264,6 @@ static void check_can_rx(uint8_t can_num) {
 					cnt = (p_id->param & 0xFF)>> 4;
 					if(cur_num) {
 						if(cur_num==cnt) {
-						  //HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 						  if(p_id->type==POINT_TO_ALL || p_id->type==PC_TO_ALL || p_id->type==PC_TO_POINT || p_id->type==PC_TO_GROUP) { // точка все
 							  j = (cur_num-1)*8;
 							  for(i=0;i<RxHeader.DLC;i++) {
@@ -293,7 +274,6 @@ static void check_can_rx(uint8_t can_num) {
 							  for(i=0;i<can_pckt_length;i++) {
 								  can_frame[i]=can_priority_frame[i];
 							  }
-							  //HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 							  add_can_frame(&can_frame[0],can_pckt_length);
 						  }
 						}else {
@@ -354,10 +334,8 @@ static void check_can_rx(uint8_t can_num) {
 			if(p_id->group_addr == group_id) {
 				if(p_id->cmd==FIND_NEXT_POINT) return;
 			}
-			//if(p_id->cmd==AUDIO_PACKET && p_id->point_addr==0x00) {HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);}
+			// ретрансляция пакетов
 			if(!(p_id->point_addr == pos_in_group && p_id->group_addr == group_id)) {
-
-				//if(p_id->cmd==POINT_STATE) HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 				packet.id = RxHeader.ExtId;
 				if(p_id->cmd==AUDIO_PACKET) {packet.priority = LOW_PACKET_PRIORITY;}
 				else packet.priority = HIGH_PACKET_PRIORITY;
@@ -377,6 +355,7 @@ static void check_can_rx(uint8_t can_num) {
 	}
 }
 
+// отправка в сеть пакетов из tx буферов с двумя приоритетами
 void can_write_from_stack() {
 	tx_stack_data packet;
 	uint8_t i = 0;
@@ -459,6 +438,7 @@ static void initCANFilter() {
 	HAL_CAN_ConfigFilter(&hcan2, &sFilterConfig);
 }
 
+// разбивка кан буфера на пакеты
 static void send_full_frame(uint8_t len, uint8_t *ptr) {
 	uint8_t i=len;
 	uint8_t cur_pckt = 1;
@@ -477,7 +457,7 @@ static void send_full_frame(uint8_t len, uint8_t *ptr) {
 		else p_id->type = POINT_TO_PC;
 		p_id->point_addr = pos_in_group;
 		p_id->group_addr = group_id;
-		p_id->cmd = 1;
+		p_id->cmd = AUDIO_PACKET;
 		p_id->param = (cur_pckt&0x0F)|((pckt_cnt&0x0F)<<4);
 		packet.priority = LOW_PACKET_PRIORITY;
 		if(cur_pckt==pckt_cnt) { // last packet
@@ -503,16 +483,16 @@ static void can_work() {
 	  if(encoded_length>0) {
 		  if(button1 || button2)
 		  {
+			  // отправка аудиоданных в сеть
 			  send_full_frame(encoded_length,(unsigned char*)&microphone_encoded_data[encoded_micr_ready_buf_num-1]);
 		  }
 		  encoded_length = 0;
 	  }
 	  encoded_micr_ready_buf_num=0;
   }
-  //if(point_to_point_tmr) point_to_point_tmr--;
-  //else to_id = 0xFF; // send data to all
 }
 
+// преобразование кан пакетов в звуковые
 static void decode_work() {
 	static uint8_t can_buf[40];
 	int res = 0;
@@ -520,20 +500,14 @@ static void decode_work() {
 	unsigned short can_length = 0;
 	if(button1) return;
 
-	can_tmr++;
-
-
-	//HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
 	can_length = get_can_frame(can_buf);
 	if((test_2_5_kHz_state==1) || (test_2_5_kHz_state==2)) {
-		can_tmr = 0;
 		for(i=0;i<FRAME_SIZE;i++) {
 			audio_stream[i] = sin_ex[sin_offset++]+0x8000;
 			if(sin_offset>=sizeof(sin_ex)/2) sin_offset = 0;
 			add_audio_frame(audio_stream,FRAME_SIZE);
 		}
 	}else if(button2) {
-		can_tmr = 0;
 		for(i=0;i<FRAME_SIZE;i++) {
 			audio_stream[i] = call_ex[call_offset2];
 			audio_stream[i]*=0.1;
@@ -543,19 +517,13 @@ static void decode_work() {
 		add_audio_frame(audio_stream,FRAME_SIZE);
 
 	}else if(can_length) {
-		//HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
-		can_tmr = 0;
 		res = opus_decode(dec,(unsigned char*)&can_buf[0],can_length,&audio_stream[0],1024,0);
 		if(res!=FRAME_SIZE) {add_empty_audio_frame();}
 		else {add_audio_frame(audio_stream,FRAME_SIZE);}
 	}
-	// no audio stream
-	if(can_tmr>=30) {
-		//add_empty_audio_frame();can_tmr = 0;
-	}
-	//HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_RESET);
 }
 
+// кодирование данных полученных от микрофона
 static void encode_work() {
 	uint16_t i = 0;
 	static int16_t tmp_frame[FRAME_SIZE];
@@ -573,9 +541,6 @@ static void encode_work() {
 
 	  }else if(button2) {
 		  for(i=0;i<FRAME_SIZE;i++) {
-			  /*tmp_frame[i] = wav_ex[wav_offset]+0x8000;
-			  wav_offset++;
-			  if(wav_offset>=sizeof(wav_ex)/2) wav_offset = 0;*/
 			  tmp_frame[i] = call_ex[call_offset];
 			  call_offset++;
 			  if(call_offset>=sizeof(call_ex)/2) call_offset = 0;
@@ -599,9 +564,6 @@ static void encode_work() {
 		  }
 	  }else if(button2) {
 		  for(i=0;i<FRAME_SIZE;i++) {
-			  /*tmp_frame[i] = wav_ex[wav_offset]+0x8000;
-			  wav_offset++;
-			  if(wav_offset>=sizeof(wav_ex)/2) wav_offset = 0;*/
 			  tmp_frame[i] = call_ex[call_offset];
 			  call_offset++;
 			  if(call_offset>=sizeof(call_ex)/2) call_offset = 0;
@@ -616,13 +578,13 @@ static void encode_work() {
 	}
 }
 
+// преобразование звука в сигнал для ЦАП
 static void convert(uint8_t num) {
 	static int16_t tmp_frame[FRAME_SIZE];
 	uint16_t i = 0;
 	if(get_audio_frame(tmp_frame)==0) {
 		for(i=0;i<FRAME_SIZE;i++) conv[num][i] = 32768;
 	}else {
-		//HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 		for(i=0;i<FRAME_SIZE;i++) {
 			conv[num][i] = ((tmp_frame[i]>>gain) + 32768);
 		}
@@ -659,7 +621,7 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
 
-  HAL_Delay(400);
+  HAL_Delay(400);	// задержка на стабилизацию питания
   HAL_FLASH_Unlock();
   __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_OPTVERR);
 
@@ -693,8 +655,6 @@ int main(void)
 
   HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_RESET);
 
-  //FIR_Init();
-
   HAL_ADC_Start_DMA(&hadc1,(uint32_t*) &adc_data,2);
 
   enc = opus_encoder_create(8000, 1, OPUS_APPLICATION_RESTRICTED_LOWDELAY, &error);
@@ -706,16 +666,16 @@ int main(void)
   HAL_DFSDM_FilterRegularStart_DMA(&hdfsdm1_filter0, (int32_t*)&RecBuf[0][0], 160*2);
 
   init_can_frames();
-	init_audio_frames();
-	initCANFilter();
-	HAL_CAN_Start(&hcan1);
-	HAL_CAN_Start(&hcan2);
-	if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK) {
-		Error_Handler();
-	}
-	if (HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK) {
-		Error_Handler();
-	}
+  init_audio_frames();
+  initCANFilter();
+  HAL_CAN_Start(&hcan1);
+  HAL_CAN_Start(&hcan2);
+  if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK) {
+	Error_Handler();
+  }
+  if (HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK) {
+	Error_Handler();
+  }
 
   HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1,(uint32_t*)conv,FRAME_SIZE*2,DAC_ALIGN_12B_L);
 
@@ -740,6 +700,7 @@ int main(void)
   {
 	  if((discrete_state & (1<<9)) || (discrete_state & (1<<10)) || ((discrete_state & (1<<8))==0)) alarm_flag=1;
 	  else alarm_flag=0;
+	  // проверка микрофона динамиков по запросу
 	  if(check_cmd && (test_2_5_kHz_state==0)) {
 		  test_2_5_kHz_state = 1;
 		  test_2_5_kHz_tmr = 0;
@@ -748,6 +709,7 @@ int main(void)
 	  }
 
 	  if(test_2_5_kHz_state==1) {
+		  // определение фонового уровня
 		  if(test_2_5_kHz_check_enable) {
 			  for(i=0;i<FFT_SIZE;i++) in_fft[i] = RecBuf[0][i];
 			  arm_rfft_fast_f32(&S, in_fft,out_fft,0);
@@ -757,6 +719,7 @@ int main(void)
 		  test_2_5_kHz_state = 2;
 	  }
 	  if((test_2_5_kHz_state==2) && (test_2_5_kHz_tmr>=1000)) {
+		  // определение уровня при генерации динамиками частоты
 		  if(test_2_5_kHz_check_enable) {
 			  for(i=0;i<FFT_SIZE;i++) in_fft[i] = RecBuf[01][i];
 			  arm_rfft_fast_f32(&S, in_fft,out_fft,0);
@@ -793,20 +756,18 @@ int main(void)
 	  can_work();
 	  uart1_scan();
 	  if(packet_tmr>=500) {
-		  //packet_tmr=0;
 		  can_caught_id = 0;
 		  if(button2 || test_2_5_kHz_state) HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_SET);
 		  else HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_RESET);
 	  }else HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_SET);
+
 	  sum_adc[0]+=adc_data[0];
 	  sum_adc[1]+=adc_data[1];
 	  adc_filter_tmr++;
 	  if(adc_filter_tmr>=32) {
 		  adc_filter_tmr=0;
-		  //pow_data[0] = (double)sum_adc[0]*33/1025/32+0.5;
-		  //pow_data[1] = (double)sum_adc[1]*33/1025/32+0.5;
 		  pow_data[0] = (double)sum_adc[0]*33/1016/32+0.5;
-		  pow_data[1] = (double)sum_adc[1]*33/1016/32+6.5;
+		  pow_data[1] = (double)sum_adc[1]*33/1016/32+6.5;	// добавка 0.6 В для компенсации падения на стабилизаторе
 		  sum_adc[0]=0;
 		  sum_adc[1]=0;
 	  }
@@ -822,6 +783,7 @@ int main(void)
 	  if(led_cnt<100) HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
 	  else HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_RESET);
 	  led_cnt++;if(led_cnt>=65000) led_cnt=0;
+	  // спящий режим
 	  HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);
 
     /* USER CODE END WHILE */

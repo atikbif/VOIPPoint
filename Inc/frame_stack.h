@@ -10,6 +10,8 @@
 #define AUDIO_BUF_SIZE		160
 #define CAN_BUF_SIZE		64
 
+// буфера для хранения CAN и аудиопакетов на базе buf_stack
+
 void init_audio_frames();
 void add_audio_frame(int16_t *ptr, uint16_t length);
 void add_empty_audio_frame();

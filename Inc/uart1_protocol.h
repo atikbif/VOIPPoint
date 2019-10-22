@@ -8,6 +8,8 @@
 #ifndef UART1_PROTOCOL_H_
 #define UART1_PROTOCOL_H_
 
+// функция обратного вызова для приёма данных от платы входов/выходов
+
 #include <stdint.h>
 
 void rx1_callback(uint8_t* rx_ptr,uint16_t rx_cnt);
