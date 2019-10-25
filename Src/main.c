@@ -25,6 +25,7 @@
 #include "dac.h"
 #include "dfsdm.h"
 #include "dma.h"
+#include "iwdg.h"
 #include "rng.h"
 #include "tim.h"
 #include "usart.h"
@@ -646,6 +647,7 @@ int main(void)
   MX_CAN2_Init();
   MX_USART1_UART_Init();
   MX_ADC1_Init();
+  //MX_IWDG_Init();
   MX_RNG_Init();
   /* USER CODE BEGIN 2 */
 
@@ -695,6 +697,8 @@ int main(void)
   while(DmaMicrophoneBuffCplt==0);
 
   send_point_state(1);
+
+  MX_IWDG_Init();
 
   while (1)
   {
@@ -783,8 +787,10 @@ int main(void)
 	  if(led_cnt<100) HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
 	  else HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_RESET);
 	  led_cnt++;if(led_cnt>=65000) led_cnt=0;
+	  HAL_IWDG_Refresh(&hiwdg);
 	  // спящий режим
 	  HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);
+	  HAL_IWDG_Refresh(&hiwdg);
 
     /* USER CODE END WHILE */
 
@@ -805,10 +811,11 @@ void SystemClock_Config(void)
 
   /** Initializes the CPU, AHB and APB busses clocks 
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE|RCC_OSCILLATORTYPE_LSE
-                              |RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE
+                              |RCC_OSCILLATORTYPE_LSE|RCC_OSCILLATORTYPE_MSI;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.LSEState = RCC_LSE_OFF;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.MSIState = RCC_MSI_ON;
   RCC_OscInitStruct.MSICalibrationValue = 0;
   RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;

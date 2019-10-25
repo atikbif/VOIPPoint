@@ -13,15 +13,25 @@
 #define BUSY_PACKET		1
 #define READY_PACKET	2
 
+static uint8_t is_stack_full(buf_stack *stack) {
+	uint8_t cnt = 0;
+	uint8_t i = 0;
+	for(i=0;i<STACK_SIZE;i++) {
+		if(stack->coils[i].state!=EMPTY_PACKET) cnt++;
+	}
+	if(cnt==STACK_SIZE) return 1;
+	return 0;
+}
+
 static uint16_t atomicWrPosIncrement(uint16_t * ptr)
 {
 	uint16_t oldValue, newValue;
 	uint8_t try_num = 0;
 	do
 	{
+		oldValue = __LDREXH(ptr);
 		try_num++;
 		if(try_num>3) break;
-		oldValue = __LDREXH(ptr);
 		newValue = oldValue + 1;
 		if(newValue>=STACK_SIZE) newValue = 0;
 	}while(__STREXH(newValue, ptr));
@@ -50,6 +60,14 @@ uint8_t add_data_to_stack(buf_stack *stack, uint8_t *data, uint16_t length) {
 	if(length>stack->max_coil_data_length) length = stack->max_coil_data_length;
 	wr_pos = atomicWrPosIncrement(&(stack->wr_pos));
 	//do{
+	if(stack->coils[wr_pos].state!=EMPTY_PACKET && is_stack_full(stack)) {
+		stack->rd_pos = 0;
+		stack->wr_pos = 0;
+		for(i=0;i<STACK_SIZE;i++) {
+			stack->coils[i].state = EMPTY_PACKET;
+			stack->coils[i].length = 0;
+		}
+	}
 		try_num++;if(try_num>3) return 0;
 		__LDREXB(&(stack->coils[wr_pos].state));
 		stack->coils[wr_pos].state = BUSY_PACKET;
