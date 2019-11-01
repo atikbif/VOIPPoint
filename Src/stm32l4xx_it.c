@@ -79,6 +79,7 @@ extern uint8_t button1;
 extern uint8_t prev_pow_data[2];
 extern uint8_t pow_data[2];
 extern RNG_HandleTypeDef hrng;
+extern uint8_t limit_switch;
 
 /* USER CODE END 0 */
 
@@ -229,13 +230,13 @@ void SysTick_Handler(void)
   search_next_tmr++;
   if(search_next_tmr>=100) {
 	  search_next_tmr = 0;
-	  if(search_next_try>=10) { last_point(); }
+	  if(search_next_try>=10 && limit_switch==0) { last_point(); }
 	  next_point(FIND_REQUEST);
 	  if(search_next_try<10) search_next_try++;
 	  sec_tmr++;
 	  if(sec_tmr>=10) {
 		  if(upd_tmr) upd_tmr--;
-
+		  if(limit_switch) last_point();
 		  sec_tmr = 0;
 		  if(button1==0) point_tmr++;
 		  if(point_tmr>=600) {
@@ -297,7 +298,7 @@ void SysTick_Handler(void)
 		  break;
 	  case 5:// реле 1
 		  tx1_buf[0]=0x61;
-		  if((discrete_state>>8)&0x40) tx1_buf[1]=0x0F;
+		  if((discrete_state>>8)&0x40 && alarm_flag==0) tx1_buf[1]=0x0F;
 		  else tx1_buf[1]=0xF0;
 		  tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
 		  send_data_to_uart1(tx1_buf,3);
@@ -309,11 +310,16 @@ void SysTick_Handler(void)
 		  tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
 		  send_data_to_uart1(tx1_buf,3);
 		  break;
+	  case 7:// концевик
+		  tx1_buf[0]=0x4B;
+		  tx1_buf[1]=0xAA;
+		  tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
+		  send_data_to_uart1(tx1_buf,3);
 	  default:
 		  break;
 	  }
 	  state++;
-	  if(state>=7) state=0;
+	  if(state>=8) state=0;
   }
   if(rx1_cnt) {rx1_tmr++;}else rx1_tmr=0;
   /* USER CODE END SysTick_IRQn 0 */

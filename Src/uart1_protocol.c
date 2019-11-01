@@ -12,7 +12,7 @@
 
 extern uint8_t button1;
 extern uint8_t button2;
-extern uint8_t button3;
+extern uint8_t limit_switch;
 extern uint16_t discrete_state;
 
 
@@ -24,8 +24,15 @@ void rx1_callback(uint8_t* rx_ptr,uint16_t rx_cnt) {
 			break;
 		case 0x42:
 			if(rx_ptr[1]==0x0F) button2 = 1;else button2 = 0;
-		case 0x43:
-			if(rx_ptr[1]==0x0F) button3 = 1;else button3 = 0;
+			break;
+		case 0x43:	// концевик
+			if(rx_ptr[1]==0x0F) {
+				limit_switch = 1;
+				discrete_state |= 1<<2;
+			}else {
+				limit_switch = 0;
+				discrete_state &= ~(1<<2);
+			}
 			break;
 		case 0x31:
 			if(rx_ptr[1]==0x03) {	// обрыв

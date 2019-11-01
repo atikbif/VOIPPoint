@@ -23,6 +23,7 @@ extern uint8_t pow_data[2];
 
 extern uint64_t gain;
 
+extern uint8_t limit_switch;
 
 void send_point_state(uint8_t can_num) {
 	tx_stack_data packet;
@@ -63,7 +64,8 @@ void next_point(uint8_t t) {
 void last_point() {
 	tx_stack_data packet;
 	id_field *p_id = (id_field*)(&packet.id);
-	p_id->type = UNUSED_TYPE;
+	if(limit_switch) p_id->type = NORMAL_FINISH;
+	else p_id->type = BREAK_FINISH;
 	p_id->point_addr = pos_in_group;
 	p_id->group_addr = group_id;
 	p_id->cmd = LAST_POINT;

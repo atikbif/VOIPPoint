@@ -123,7 +123,12 @@ tx_stack can2_tx_stack_pr;
 
 uint8_t button1 = 0;
 uint8_t button2 = 0;
-uint8_t button3 = 0;
+// осто€ние концевика
+uint8_t limit_switch = 0;
+
+// лаг внешнего вызова
+uint8_t call_flag = 0;
+uint16_t call_tmr = 0;
 
 // группа переменных дл€ проверки исправности микрофона и динамиков
 
@@ -148,6 +153,7 @@ uint16_t discrete_state = 0;	// битовое состо€ние точки
 // младший байт:
 // бит 0 - результат проверки микрофона/динамиков
 // бит 1  - была ли проверка
+// бит 2 - состо€ние концевика
 //старший байт:
 // бит 0 - вход 1 замкнут
 // бит 1 - вход 1 обрыв
@@ -219,7 +225,7 @@ uint8_t static check_id_priority(uint32_t packet_id) {
 		}
 		return 0;
 	}
-	if(input_id->type==POINT_TO_ALL) { // точка все
+	if(input_id->type==POINT_TO_ALL || input_id->type==POINT_CALL) { // точка все
 		if(cur_id->type==UNKNOWN_TYPE) {	// пакеты не захвачены
 			*cur_id = *input_id;
 			point_flag = 0;
@@ -261,25 +267,31 @@ static void check_can_rx(uint8_t can_num) {
 			if(p_id->cmd==AUDIO_PACKET) { // аудиопоток
 				if(button1==0 && button2==0 && check_id_priority(RxHeader.ExtId)) {
 					packet_tmr = 0;
-					cur_num = p_id->param & 0x0F;
-					cnt = (p_id->param & 0xFF)>> 4;
-					if(cur_num) {
-						if(cur_num==cnt) {
-						  if(p_id->type==POINT_TO_ALL || p_id->type==PC_TO_ALL || p_id->type==PC_TO_POINT || p_id->type==PC_TO_GROUP) { // точка все
+					if(p_id->type==POINT_CALL) {
+						call_flag = 1;
+						call_tmr=0;
+						//HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+					}else {
+						cur_num = p_id->param & 0x0F;
+						cnt = (p_id->param & 0xFF)>> 4;
+						if(cur_num) {
+							if(cur_num==cnt) {
+							  if(p_id->type==POINT_TO_ALL || p_id->type==PC_TO_ALL || p_id->type==PC_TO_POINT || p_id->type==PC_TO_GROUP) { // точка все
+								  j = (cur_num-1)*8;
+								  for(i=0;i<RxHeader.DLC;i++) {
+									  if(j+i<OPUS_PACKET_MAX_LENGTH) can_priority_frame[j+i]=RxData[i];
+								  }
+								  can_pckt_length = (cnt-1)*8+RxHeader.DLC;
+								  if(can_pckt_length>OPUS_PACKET_MAX_LENGTH) can_pckt_length = OPUS_PACKET_MAX_LENGTH;
+								  for(i=0;i<can_pckt_length;i++) {
+									  can_frame[i]=can_priority_frame[i];
+								  }
+								  add_can_frame(&can_frame[0],can_pckt_length);
+							  }
+							}else {
 							  j = (cur_num-1)*8;
-							  for(i=0;i<RxHeader.DLC;i++) {
-								  if(j+i<OPUS_PACKET_MAX_LENGTH) can_priority_frame[j+i]=RxData[i];
-							  }
-							  can_pckt_length = (cnt-1)*8+RxHeader.DLC;
-							  if(can_pckt_length>OPUS_PACKET_MAX_LENGTH) can_pckt_length = OPUS_PACKET_MAX_LENGTH;
-							  for(i=0;i<can_pckt_length;i++) {
-								  can_frame[i]=can_priority_frame[i];
-							  }
-							  add_can_frame(&can_frame[0],can_pckt_length);
-						  }
-						}else {
-						  j = (cur_num-1)*8;
-						  for(i=0;i<8;i++) { if(j+i<OPUS_PACKET_MAX_LENGTH) can_priority_frame[j+i]=RxData[i]; }
+							  for(i=0;i<8;i++) { if(j+i<OPUS_PACKET_MAX_LENGTH) can_priority_frame[j+i]=RxData[i]; }
+							}
 						}
 					}
 				}
@@ -312,6 +324,8 @@ static void check_can_rx(uint8_t can_num) {
 			}else if(p_id->cmd==GATE_STATE) {
 				if(can_num==1) {
 					group_id = p_id ->group_addr;
+					if(RxData[1]&(1<<3)) {discrete_state |= 0x4000;}else{discrete_state &= ~(0x4000);}
+					if(RxData[1]&(1<<4)) {discrete_state |= 0x8000;}else{discrete_state &= ~(0x8000);}
 				}
 			}else if(p_id->point_addr == pos_in_group && p_id->group_addr == group_id && p_id->cmd==BOOT) {
 				if(p_id->type==BOOT_SWITCH) {
@@ -334,6 +348,7 @@ static void check_can_rx(uint8_t can_num) {
 			}
 			if(p_id->group_addr == group_id) {
 				if(p_id->cmd==FIND_NEXT_POINT) return;
+				if(limit_switch && p_id->cmd==LAST_POINT && can_num==2) return;
 			}
 			// ретрансл€ци€ пакетов
 			if(!(p_id->point_addr == pos_in_group && p_id->group_addr == group_id)) {
@@ -454,8 +469,12 @@ static void send_full_frame(uint8_t len, uint8_t *ptr) {
 	}
 	i=1;
 	while(cur_pckt<=pckt_cnt) {
-		if(point_flag==0) p_id->type = POINT_TO_ALL;
-		else p_id->type = POINT_TO_PC;
+		if(button2) p_id->type = POINT_CALL;
+		else {
+			if(point_flag==0) p_id->type = POINT_TO_ALL;
+			else p_id->type = POINT_TO_PC;
+		}
+
 		p_id->point_addr = pos_in_group;
 		p_id->group_addr = group_id;
 		p_id->cmd = AUDIO_PACKET;
@@ -508,10 +527,10 @@ static void decode_work() {
 			if(sin_offset>=sizeof(sin_ex)/2) sin_offset = 0;
 			add_audio_frame(audio_stream,FRAME_SIZE);
 		}
-	}else if(button2) {
+	}else if(button2 || call_flag) {
 		for(i=0;i<FRAME_SIZE;i++) {
 			audio_stream[i] = call_ex[call_offset2];
-			audio_stream[i]*=0.1;
+			if(call_flag==0) audio_stream[i]*=0.1;
 			call_offset2++;
 			if(call_offset2>=sizeof(call_ex)/2) call_offset2 = 0;
 		}
@@ -647,7 +666,7 @@ int main(void)
   MX_CAN2_Init();
   MX_USART1_UART_Init();
   MX_ADC1_Init();
-  //MX_IWDG_Init();
+  MX_IWDG_Init();
   MX_RNG_Init();
   /* USER CODE BEGIN 2 */
 
@@ -698,7 +717,7 @@ int main(void)
 
   send_point_state(1);
 
-  MX_IWDG_Init();
+  //MX_IWDG_Init();
 
   while (1)
   {
@@ -761,7 +780,7 @@ int main(void)
 	  uart1_scan();
 	  if(packet_tmr>=500) {
 		  can_caught_id = 0;
-		  if(button2 || test_2_5_kHz_state) HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_SET);
+		  if(button2 || test_2_5_kHz_state || call_flag) HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_SET);
 		  else HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_RESET);
 	  }else HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_SET);
 
@@ -781,12 +800,15 @@ int main(void)
 		  point_tmr = 0;
 		  point_flag = 0;
 	  }else {
-		  call_offset = 0;
-		  call_offset2 = 0;
+		  if(call_flag==0) {
+			  call_offset = 0;
+			  call_offset2 = 0;
+		  }
 	  }
 	  if(led_cnt<100) HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
 	  else HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_RESET);
-	  led_cnt++;if(led_cnt>=65000) led_cnt=0;
+	  led_cnt++;if(led_cnt>=65000) {led_cnt=0;}
+	  if(call_tmr<65000) call_tmr++;else {call_flag=0;}
 	  HAL_IWDG_Refresh(&hiwdg);
 	  // сп€щий режим
 	  HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);

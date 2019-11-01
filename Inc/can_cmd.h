@@ -34,6 +34,7 @@
 #define		POINT_TO_ALL		4
 #define		POINT_TO_PC			5
 #define		UNUSED_TYPE			6
+#define		POINT_CALL			7
 
 // BOOT TYPES
 
@@ -43,6 +44,11 @@
 #define		BOOT_ERASE_PAGE_REQ		3
 #define		BOOT_ERASE_PAGE_ACK		4
 #define		BOOT_SWITCH				5
+
+// LAST POINT TYPES
+
+#define BREAK_FINISH		0
+#define	NORMAL_FINISH		1
 
 // CAN extended id bit structure
 
