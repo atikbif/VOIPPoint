@@ -203,6 +203,14 @@ uint8_t static check_id_priority(uint32_t packet_id) {
 	id_field *input_id = (id_field*)(&packet_id);
 	id_field *cur_id = (id_field*)(&can_caught_id);
 	if(input_id->type==POINT_TO_PC) return 0; // точка компьютер игнорируем
+	if(input_id->type==AUDIO_INFO) {
+		if(cur_id->type!=AUDIO_INFO || ((cur_id->type==AUDIO_INFO) && (cur_id->group_addr==input_id->group_addr))) {
+			*cur_id = *input_id;
+			point_flag = 0;
+			return 1;
+		}
+	}
+	if(cur_id->type==AUDIO_INFO) return 0;
 	if(input_id->type==PC_TO_ALL) { // компьютер ко всем
 		*cur_id = *input_id;
 		point_flag = 0;
@@ -265,6 +273,7 @@ static void check_can_rx(uint8_t can_num) {
 		if(HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK) {
 			p_id = (id_field*)(&(RxHeader.ExtId));
 			if(p_id->cmd==AUDIO_PACKET) { // аудиопоток
+
 				if(button1==0 && button2==0 && check_id_priority(RxHeader.ExtId)) {
 					packet_tmr = 0;
 					if(p_id->type==POINT_CALL) {
@@ -276,7 +285,7 @@ static void check_can_rx(uint8_t can_num) {
 						cnt = (p_id->param & 0xFF)>> 4;
 						if(cur_num) {
 							if(cur_num==cnt) {
-							  if(p_id->type==POINT_TO_ALL || p_id->type==PC_TO_ALL || p_id->type==PC_TO_POINT || p_id->type==PC_TO_GROUP) { // точка все
+							  if(p_id->type==POINT_TO_ALL || p_id->type==PC_TO_ALL || p_id->type==PC_TO_POINT || p_id->type==PC_TO_GROUP || p_id->type==AUDIO_INFO) { // точка все
 								  j = (cur_num-1)*8;
 								  for(i=0;i<RxHeader.DLC;i++) {
 									  if(j+i<OPUS_PACKET_MAX_LENGTH) can_priority_frame[j+i]=RxData[i];

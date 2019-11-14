@@ -12,6 +12,7 @@
 
 #define		FIND_REQUEST	1
 #define		FIND_ANSWER		2
+#define		UNUSED_TYPE		6
 
 #define		AUDIO_PACKET		1
 #define		FIND_NEXT_POINT		2
@@ -33,7 +34,7 @@
 #define		PC_TO_POINT			3
 #define		POINT_TO_ALL		4
 #define		POINT_TO_PC			5
-#define		UNUSED_TYPE			6
+#define		AUDIO_INFO			6
 #define		POINT_CALL			7
 
 // BOOT TYPES
