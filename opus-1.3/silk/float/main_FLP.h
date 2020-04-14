@@ -28,10 +28,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef SILK_MAIN_FLP_H
 #define SILK_MAIN_FLP_H
 
-#include <main.h>
 #include "SigProc_FLP.h"
 #include "SigProc_FIX.h"
 #include "structs_FLP.h"
+#include "main.h"
 #include "define.h"
 #include "debug.h"
 #include "entenc.h"

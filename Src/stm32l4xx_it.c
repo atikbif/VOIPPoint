@@ -56,30 +56,52 @@
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-extern void can_write_from_stack();
-extern void send_search_next_point(uint8_t t);
+extern void can_write_from_stack();	// отправка в кан сети пакетов ранее поставленных в очередь
+
+extern void convert(uint8_t num); // преобразование звука в сигнал для ЦАП с учётом коэффициента ослабления
+// звуковой пакет берётся из стека аудиопакетов
+
+extern volatile uint32_t	DmaDacHalfBuffCplt;
+extern volatile uint32_t    DmaDacBuffCplt;
 
 extern uint8_t rx1_buf[UART_BUF_SISE];
 extern uint8_t tx1_buf[UART_BUF_SISE];
-extern uint16_t rx1_cnt;
-extern uint16_t rx1_tmr;
-extern uint16_t packet_tmr;
-extern volatile uint16_t test_2_5_kHz_tmr;
-extern uint8_t test_2_5_kHz_state;
-extern uint16_t discrete_state;
-uint16_t prev_discr_state = 0;
+extern uint16_t rx1_cnt;					// счётчик принятых по UART байт
+extern uint16_t rx1_tmr;					// таймер тишины для определения конца пакета входящих по UART данных
 
-uint16_t search_next_tmr = 0;
-uint8_t search_next_try = 0;
-extern uint8_t alarm_flag;
-extern uint16_t point_tmr;
-extern uint8_t point_flag;
-extern uint8_t button1;
+extern uint16_t packet_tmr;					// таймер активности звукового выхода
+extern volatile uint16_t test_2_5_kHz_tmr;	// вспомогательный таймер для проверки динамиков
+extern uint8_t test_2_5_kHz_state;			// этап проверки динамиков
 
-extern uint8_t prev_pow_data[2];
-extern uint8_t pow_data[2];
-extern RNG_HandleTypeDef hrng;
-extern uint8_t limit_switch;
+extern uint16_t discrete_state;				// битовое состояние точки
+uint16_t prev_discr_state = 0;				// битовое состояние для отслеживания изменений
+
+uint16_t search_next_tmr = 0;				// таймер для периодической проверки наличия следующей в цепи точки
+uint8_t search_next_try = 0;				// число безответных попыток поиска следующей в цепи точки
+
+extern uint8_t alarm_flag;					// авария точки
+
+extern uint16_t point_tmr;					// таймер для отправки звука всей сети посл завершения связи с компьютером
+extern uint8_t point_flag;					// флаг общения точки с компьютером
+// при вызове с компьютера точка запоминает что звук она должна транслировать компьютеру, а не всем точкам в сети
+// при срабатывании таймера (компьютер не вызывает точку в течение некоторого времени)
+// трансляция опять начинает идти на всю сеть
+
+extern uint8_t button1;				// кнопка начала трансляции звука в сеть
+
+extern uint8_t prev_pow_data[2];	// предыдущие значения напряжения для отслеживания изменений
+extern uint8_t pow_data[2];			// напряжение аккумулятора и питания 1 ед - 0.1В
+
+extern RNG_HandleTypeDef hrng;		// random number generator для оповещения о состоянии точки со случайным периодом
+// чтобы исключить пиковую нагрузку на сеть
+
+extern uint8_t limit_switch;		// состояние концевого переключателя (точка последняя в цепи)
+
+extern uint8_t call_flag;			// флаг внешнего вызова
+extern uint16_t call_tmr;			// таймер для определения прекращения внешнего вызова
+
+extern uint16_t adc_tmr;			// таймер для усреднения данных ацп
+extern uint16_t led_cnt;			// счётчик для подмигивания светодиодом
 
 /* USER CODE END 0 */
 
@@ -87,8 +109,8 @@ extern uint8_t limit_switch;
 extern DMA_HandleTypeDef hdma_adc1;
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
-extern DMA_HandleTypeDef hdma_dac_ch1;
 extern DMA_HandleTypeDef hdma_dfsdm1_flt0;
+extern TIM_HandleTypeDef htim6;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -120,6 +142,8 @@ void HardFault_Handler(void)
   while (1)
   {
     /* USER CODE BEGIN W1_HardFault_IRQn 0 */
+	  //HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+	  break;
     /* USER CODE END W1_HardFault_IRQn 0 */
   }
 }
@@ -135,6 +159,8 @@ void MemManage_Handler(void)
   while (1)
   {
     /* USER CODE BEGIN W1_MemoryManagement_IRQn 0 */
+	  //HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+	  break;
     /* USER CODE END W1_MemoryManagement_IRQn 0 */
   }
 }
@@ -150,6 +176,8 @@ void BusFault_Handler(void)
   while (1)
   {
     /* USER CODE BEGIN W1_BusFault_IRQn 0 */
+	  //HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+	  break;
     /* USER CODE END W1_BusFault_IRQn 0 */
   }
 }
@@ -165,6 +193,8 @@ void UsageFault_Handler(void)
   while (1)
   {
     /* USER CODE BEGIN W1_UsageFault_IRQn 0 */
+	  //HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+	  break;
     /* USER CODE END W1_UsageFault_IRQn 0 */
   }
 }
@@ -214,35 +244,45 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
+
+	//HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
+
   static uint16_t i=0;
   static uint8_t state = 0;
   static uint16_t sec_tmr=0;
   static uint32_t upd_tmr = 0;
 
+  //HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin, GPIO_PIN_SET);
+
+  // периодическая отправка состояния точки со случайным интервалом 0 - 15 секунд
   if(upd_tmr==0) {
 	  upd_tmr = HAL_RNG_GetRandomNumber(&hrng) & 0x0F;
 	  send_point_state(1);
   }
 
+  // отправка ранее поставленных в очередь кан пакетов в сеть
   can_write_from_stack();
 
   if(test_2_5_kHz_state) test_2_5_kHz_tmr++;
+
   search_next_tmr++;
   if(search_next_tmr>=100) {
 	  search_next_tmr = 0;
-	  if(search_next_try>=10 && limit_switch==0) { last_point(); }
-	  next_point(FIND_REQUEST);
+	  if(search_next_try>=10 && limit_switch==0) { last_point(); }	// последняя точка в сети, концевик выключен
+	  next_point(FIND_REQUEST);	// поиск следующей точки каждые 100 мс
 	  if(search_next_try<10) search_next_try++;
 	  sec_tmr++;
-	  if(sec_tmr>=10) {
+	  if(sec_tmr>=10) {	// срабатывает раз в секунду
 		  if(upd_tmr) upd_tmr--;
 		  if(limit_switch) last_point();
 		  sec_tmr = 0;
+		  // таймер разрыва соединения с компьютером увеличивается только если точка не транслирует данные в сеть
 		  if(button1==0) point_tmr++;
 		  if(point_tmr>=600) {
 			  point_tmr = 0;
 			  point_flag = 0;
 		  }
+		  // отправка данных по изменению или в случае аварии (изменение аналоговых входов не требует мгновенного оповещения)
 		  if(prev_pow_data[0]!=pow_data[0] || prev_pow_data[1]!=pow_data[1] || alarm_flag) {
 			  send_point_state(1);
 		  }
@@ -251,13 +291,16 @@ void SysTick_Handler(void)
 
 	  }
   }
-  i++;
   if(packet_tmr<500) packet_tmr++;
+  // отправка данных по изменению битового состояния точки
   if(prev_discr_state != discrete_state) {
 	  send_point_state(1);
   }
   prev_discr_state = discrete_state;
-  if(i==25) {
+
+  // посылки для общения с платой входов и индикации по UART
+  i++;
+  if(i==25) {	// состояние дискретного входа 1
 	  tx1_buf[0]=0x39;
 	  tx1_buf[1]=0xAA;
 	  tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
@@ -266,7 +309,7 @@ void SysTick_Handler(void)
   if(i>=50) {
 	  i = 0;
 	  switch(state) {
-	  case 0:
+	  case 0:	// сообщение связи
 		  tx1_buf[0]=0xDE;
 		  tx1_buf[1]=0xDD;
 		  tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
@@ -321,10 +364,20 @@ void SysTick_Handler(void)
 	  state++;
 	  if(state>=8) state=0;
   }
+
   if(rx1_cnt) {rx1_tmr++;}else rx1_tmr=0;
+
+  if(call_tmr<100) call_tmr++;else {call_flag=0;}
+
+  adc_tmr++;
+
+  led_cnt++;if(led_cnt>=1000) {led_cnt=0;}
+
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
+
+  //HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin, GPIO_PIN_RESET);
 
   /* USER CODE END SysTick_IRQn 1 */
 }
@@ -356,9 +409,26 @@ void DMA1_Channel1_IRQHandler(void)
 void DMA1_Channel3_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel3_IRQn 0 */
+  if(LL_DMA_IsActiveFlag_TE3(DMA1) == 1)
+  {
+	//HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+	LL_DMA_ClearFlag_TE3(DMA1);
+  }
+  if(LL_DMA_IsActiveFlag_TC3(DMA1) == 1)
+  {
+	  //HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+  	LL_DMA_ClearFlag_TC3(DMA1);
+  	DmaDacBuffCplt = 1;
+  }
+  if(LL_DMA_IsActiveFlag_HT3(DMA1) == 1)
+  {
+	LL_DMA_ClearFlag_HT3(DMA1);
+    DmaDacHalfBuffCplt = 1;
+  }
+
 
   /* USER CODE END DMA1_Channel3_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_dac_ch1);
+  
   /* USER CODE BEGIN DMA1_Channel3_IRQn 1 */
 
   /* USER CODE END DMA1_Channel3_IRQn 1 */
@@ -389,6 +459,8 @@ void CAN1_RX0_IRQHandler(void)
   HAL_CAN_IRQHandler(&hcan1);
   /* USER CODE BEGIN CAN1_RX0_IRQn 1 */
 
+
+
   /* USER CODE END CAN1_RX0_IRQn 1 */
 }
 
@@ -411,6 +483,23 @@ void USART1_IRQHandler(void)
   /* USER CODE BEGIN USART1_IRQn 1 */
 
   /* USER CODE END USART1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM6 global interrupt, DAC channel1 and channel2 underrun error interrupts.
+  */
+void TIM6_DAC_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM6_DAC_IRQn 0 */
+	if(LL_DAC_IsActiveFlag_DMAUDR1(DAC1) != 0)
+	{
+	    LL_DAC_ClearFlag_DMAUDR1(DAC1);
+	}
+  /* USER CODE END TIM6_DAC_IRQn 0 */
+  //HAL_TIM_IRQHandler(&htim6);
+  /* USER CODE BEGIN TIM6_DAC_IRQn 1 */
+
+  /* USER CODE END TIM6_DAC_IRQn 1 */
 }
 
 /**

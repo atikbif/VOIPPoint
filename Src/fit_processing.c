@@ -7,6 +7,8 @@
 
 #include "fit_processing.h"
 
+// FIR фильтры (коэффициенты конкретных фильтров рассчитывались с помощью внешней программы)
+
 uint32_t blockSize = BLOCK_SIZE;
 uint32_t numBlocks = 160*6/BLOCK_SIZE;
 uint32_t numBlocks2 = 160*6/BLOCK_SIZE;

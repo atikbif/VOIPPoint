@@ -57,9 +57,17 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-#define	FRAME_SIZE	160
+#define	FRAME_SIZE	160		// размер одного пакета аудиоданных (в байтах будет 160*2)
+
+// макрос ограничения величины снизу и сверху
 #define SaturaLH(N, L, H) (((N)<(L))?(L):(((N)>(H))?(H):(N)))
-#define FFT_SIZE 128//указываем размер FFT (быстрое преобразование Фурье)
+
+#define FFT_SIZE 128// число точек для быстрого преобразования Фурье (должно быть степенью двойки)
+// необходимо для анализа спектра сигнала, полученного с микрофона
+// частота звукового сигнала 8 кГц, шаг в полученном спектре 8000/128 = 62.5 Гц
+// arm_rfft_fast_init_f32 - инициализация
+// arm_rfft_fast_f32 - собственно преобразование
+// arm_cmplx_mag_f32 - вычисление амплитуд сигнала
 
 /* USER CODE END PD */
 
@@ -72,72 +80,118 @@
 
 /* USER CODE BEGIN PV */
 
+// переменные для стирания страницы FLASH амяти
 static FLASH_EraseInitTypeDef EraseInitStruct;
 uint32_t PAGEError = 0;
 
-volatile int32_t		RecBuf[2][FRAME_SIZE];
-uint16_t 	conv[2][FRAME_SIZE];
+// промежуточный буфер для получения данных из аудиостека
+// в дальнейшем данные изменяются в соответствии с коэффициентом ослабления звука
+static volatile int16_t tmp_frame[2][1024] __attribute__((aligned(4)));
 
+// буфер данных, полученных от микрофона
+volatile int32_t		RecBuf[2][FRAME_SIZE] __attribute__((aligned(4)));
+
+// буфер данных, отправляемых на динамик
+volatile uint16_t 	conv[2][FRAME_SIZE] __attribute__((aligned(4)));
+
+// флаги приёма данных от микрофона по DMA
 volatile uint32_t	DmaMicrophoneHalfBuffCplt  = 0;
 volatile uint32_t    DmaMicrophoneBuffCplt      = 0;
 
+// флаги отправки данных в DAC по DMA
 volatile uint32_t	DmaDacHalfBuffCplt  = 0;
 volatile uint32_t    DmaDacBuffCplt      = 0;
 
-extern DAC_HandleTypeDef hdac1;
 extern CAN_HandleTypeDef hcan1;
 
+// переменные для работу с опусом
 OpusDecoder *dec;
 OpusEncoder *enc;
 static int error = 0;
-char microphone_encoded_data[2][256];
+
+// буфер в который записывается результат кодирования звука опусом
+char microphone_encoded_data[2][256] __attribute__((aligned(4)));
+
+// результирующая длина закодированного массива
 int8_t encoded_length = 0;
-int16_t	audio_stream[1024];
 
-#define OPUS_PACKET_MAX_LENGTH	64
+// буфер в который помещается результат декодирования пакетов опусом
+int16_t	audio_stream[1024] __attribute__((aligned(4)));
 
+#define OPUS_PACKET_MAX_LENGTH	100
+
+
+// переменные для работы с кан интерфейсом
 static CAN_TxHeaderTypeDef   TxHeader;
 static uint32_t              TxMailbox1=0;
 static uint32_t              TxMailbox2=0;
-static uint8_t               TxData[8];
+static uint8_t               TxData[8] __attribute__((aligned(4)));
 static CAN_RxHeaderTypeDef   RxHeader;
-static uint8_t               RxData[8];
-static uint8_t				 can_frame[OPUS_PACKET_MAX_LENGTH];
-static uint8_t 				 can_priority_frame[OPUS_PACKET_MAX_LENGTH];
+static uint8_t               RxData[8] __attribute__((aligned(4)));
+
+// буфера для сборки закодированного аудиопакета из кан пакетов
+static uint8_t				 can_frame[OPUS_PACKET_MAX_LENGTH] __attribute__((aligned(4)));
+static uint8_t 				 can_priority_frame[OPUS_PACKET_MAX_LENGTH] __attribute__((aligned(4)));
+
+// заголовок текущего звукового закодированного кан пакета, захваченного для воспроизведения
 static uint32_t				 can_caught_id = 0;
 
-uint8_t group_id = 0;	// номер группы/шлюза к которой принадлежит точка
-uint16_t packet_tmr = 0;	// таймер активности звукового выхода
+// номер группы/шлюза к которой принадлежит точка
+uint8_t group_id = 0;
+
+// таймер активности звукового выхода (сбрасывется при наличии пакетов которые необходимо воспроизвести)
+// инкрементируется по прерыванию каждую миллисекунду
+uint16_t packet_tmr = 0;
+
+// длина собранного звукового кан пакета
+// перенести в check_can_rx
 uint8_t can_pckt_length = 0;
 
+// флаг получения данных от микрофона
+// 1 - получена первая половина буфера
+// 2 - получена вторая половина буфера
 unsigned char encoded_micr_ready_buf_num = 0;
 
+// счётчик для отправки в динамик сигнала синуса из буфера sin_ex
+// спользуется для проверки исправности системы динамик/микрофон
 uint32_t sin_offset = 0;
+
+// счётчик для отправки кодирования опусом и отправки в кан сеть сигнала вызова из буфера call_ex
 uint32_t call_offset = 0;
+
+// счётчик для отправки в динамик сигнала вызова из буфера call_ex
 uint32_t call_offset2 = 0;
 
+// стеки кан пакетов для отправки
 tx_stack can1_tx_stack;
 tx_stack can2_tx_stack;
-tx_stack can1_tx_stack_pr;	// буфера с повышенным приоритетом для передачи
+
+// стеки кан пакетов для отправки с повышенным приоритетом
+tx_stack can1_tx_stack_pr;
 tx_stack can2_tx_stack_pr;
 
+// кнопка для передачи звука в кан сеть
 uint8_t button1 = 0;
+
+// кнопка для отправки сигнала вызова в кан сеть
 uint8_t button2 = 0;
-// остояние концевика
+
+// cостояние концевика (указывает что точка последняя в цепочке)
 uint8_t limit_switch = 0;
 
-// лаг внешнего вызова
+// флаг внешнего вызова
 uint8_t call_flag = 0;
 uint16_t call_tmr = 0;
 
-// группа переменных для проверки исправности микрофона и динамиков
+// группа переменных для проверки исправности микрофона и динамиков с помощью преобразования фурье
 
-float32_t in_fft[FFT_SIZE] = {0};
-float32_t out_fft[FFT_SIZE] = {0};
+float32_t in_fft[FFT_SIZE] = {0};	// входные данные для преобразования
+float32_t out_fft[FFT_SIZE] = {0};	// результат преобразования
 arm_rfft_fast_instance_f32 S;
 
 float32_t base_2_5_kHz_level;		// уровень фонового сигнала микрофона на 2.5 кГц
 float32_t test_2_5_kHz_level;		// уровень сигнала микрофона на 2.5 кГц во время проверки динамиков
+
 
 volatile uint16_t test_2_5_kHz_tmr = 0;
 uint8_t test_2_5_kHz_res = 0;
@@ -186,6 +240,9 @@ uint64_t gain = 0; // текущий уровень громкости
 // 1 - ослабление в 2 раза
 // 2 - в 4 раза
 // 3 - в 8 раз
+
+uint16_t adc_tmr=0;
+uint16_t led_cnt = 0;
 
 /* USER CODE END PV */
 
@@ -273,7 +330,6 @@ static void check_can_rx(uint8_t can_num) {
 		if(HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK) {
 			p_id = (id_field*)(&(RxHeader.ExtId));
 			if(p_id->cmd==AUDIO_PACKET) { // аудиопоток
-
 				if(button1==0 && button2==0 && check_id_priority(RxHeader.ExtId)) {
 					packet_tmr = 0;
 					if(p_id->type==POINT_CALL) {
@@ -365,6 +421,7 @@ static void check_can_rx(uint8_t can_num) {
 				if(p_id->cmd==AUDIO_PACKET) {packet.priority = LOW_PACKET_PRIORITY;}
 				else packet.priority = HIGH_PACKET_PRIORITY;
 				packet.length = RxHeader.DLC;
+				if(packet.length>CAN_TX_DATA_SIZE) packet.length = CAN_TX_DATA_SIZE;
 				for(i=0;i<packet.length;++i) packet.data[i] = RxData[i];
 				if(can_num==1)	{
 					if(packet.priority == LOW_PACKET_PRIORITY) add_tx_can_packet(&can2_tx_stack,&packet);
@@ -384,8 +441,12 @@ static void check_can_rx(uint8_t can_num) {
 void can_write_from_stack() {
 	tx_stack_data packet;
 	uint8_t i = 0;
+	uint8_t try = 0;
 	while(HAL_CAN_GetTxMailboxesFreeLevel(&hcan1)!=0) {
+		try++;
+		if(try>=10) return;
 		if(get_tx_can_packet(&can1_tx_stack_pr,&packet)) {
+			if(packet.length>8) continue;
 			TxHeader.StdId = 0;
 			TxHeader.ExtId = packet.id;
 			TxHeader.RTR = CAN_RTR_DATA;
@@ -397,6 +458,7 @@ void can_write_from_stack() {
 			continue;
 		}
 		if(get_tx_can_packet(&can1_tx_stack,&packet)) {
+			if(packet.length>8) continue;
 			TxHeader.StdId = 0;
 			TxHeader.ExtId = packet.id;
 			TxHeader.RTR = CAN_RTR_DATA;
@@ -407,8 +469,12 @@ void can_write_from_stack() {
 			HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox1);
 		}else break;
 	}
+	try=0;
 	while(HAL_CAN_GetTxMailboxesFreeLevel(&hcan2)!=0) {
+		try++;
+		if(try>=10) return;
 		if(get_tx_can_packet(&can2_tx_stack_pr,&packet)) {
+			if(packet.length>8) continue;
 			TxHeader.IDE = CAN_ID_EXT;
 			TxHeader.StdId = 0;
 			TxHeader.ExtId = packet.id;
@@ -421,6 +487,7 @@ void can_write_from_stack() {
 			continue;
 		}
 		if(get_tx_can_packet(&can2_tx_stack,&packet)) {
+			if(packet.length>8) continue;
 			TxHeader.IDE = CAN_ID_EXT;
 			TxHeader.StdId = 0;
 			TxHeader.ExtId = packet.id;
@@ -470,7 +537,7 @@ static void send_full_frame(uint8_t len, uint8_t *ptr) {
 	uint8_t pckt_cnt = 0;
 	tx_stack_data packet;
 	id_field *p_id = (id_field*)(&packet.id);
-
+	if(len==0) return;
 	while(i) {
 		pckt_cnt++;
 		if(i<=8) {i=0;break;}
@@ -513,7 +580,10 @@ static void can_work() {
 		  if(button1 || button2)
 		  {
 			  // отправка аудиоданных в сеть
-			  send_full_frame(encoded_length,(unsigned char*)&microphone_encoded_data[encoded_micr_ready_buf_num-1]);
+			  if(encoded_micr_ready_buf_num==1 || encoded_micr_ready_buf_num==2) {
+				  send_full_frame(encoded_length,(unsigned char*)&microphone_encoded_data[encoded_micr_ready_buf_num-1]);
+			  }
+
 		  }
 		  encoded_length = 0;
 	  }
@@ -523,13 +593,13 @@ static void can_work() {
 
 // преобразование кан пакетов в звуковые
 static void decode_work() {
-	static uint8_t can_buf[40];
+	static volatile uint8_t can_buf[CAN_BUF_SIZE];
 	int res = 0;
 	uint16_t i = 0;
 	unsigned short can_length = 0;
 	if(button1) return;
 
-	can_length = get_can_frame(can_buf);
+	can_length = get_can_frame((uint8_t*)can_buf);
 	if((test_2_5_kHz_state==1) || (test_2_5_kHz_state==2)) {
 		for(i=0;i<FRAME_SIZE;i++) {
 			audio_stream[i] = sin_ex[sin_offset++]+0x8000;
@@ -543,12 +613,19 @@ static void decode_work() {
 			call_offset2++;
 			if(call_offset2>=sizeof(call_ex)/2) call_offset2 = 0;
 		}
+		//HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 		add_audio_frame(audio_stream,FRAME_SIZE);
 
-	}else if(can_length) {
+	}else if(can_length && can_length<CAN_BUF_SIZE) {
+		//HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
+		//__disable_irq();
 		res = opus_decode(dec,(unsigned char*)&can_buf[0],can_length,&audio_stream[0],1024,0);
-		if(res!=FRAME_SIZE) {add_empty_audio_frame();}
-		else {add_audio_frame(audio_stream,FRAME_SIZE);}
+		//__enable_irq();
+		//HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_RESET);
+		//if(res!=FRAME_SIZE) {add_empty_audio_frame();}
+		//else {add_audio_frame(audio_stream,FRAME_SIZE);}
+		if(res==FRAME_SIZE) add_audio_frame(audio_stream,FRAME_SIZE);
+		//HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 	}
 }
 
@@ -557,6 +634,7 @@ static void encode_work() {
 	uint16_t i = 0;
 	static int16_t tmp_frame[FRAME_SIZE];
 	if(test_2_5_kHz_state) return;
+
 	if(DmaMicrophoneBuffCplt) {
 
 	  if(button1) {
@@ -608,14 +686,17 @@ static void encode_work() {
 }
 
 // преобразование звука в сигнал для ЦАП
-static void convert(uint8_t num) {
-	static int16_t tmp_frame[FRAME_SIZE];
-	uint16_t i = 0;
-	if(get_audio_frame(tmp_frame)==0) {
-		for(i=0;i<FRAME_SIZE;i++) conv[num][i] = 32768;
-	}else {
+void convert(uint8_t num) {
+	uint16_t i=0;
+	if(num>1) return;
+	uint16_t cnt = get_audio_frame((int16_t*)&tmp_frame[num][0]);
+
+	if(cnt!=FRAME_SIZE) {
+		for(uint16_t i=0;i<FRAME_SIZE;i++) conv[num][i] = 32768;
+	}else
+	{
 		for(i=0;i<FRAME_SIZE;i++) {
-			conv[num][i] = ((tmp_frame[i]>>gain) + 32768);
+			conv[num][i] = ((tmp_frame[num][i]>>gain) + 32768);
 		}
 	}
 }
@@ -631,7 +712,6 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
 	uint16_t i = 0;
-	uint16_t led_cnt = 0;
 
   /* USER CODE END 1 */
   
@@ -650,12 +730,13 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
 
-  HAL_Delay(400);	// задержка на стабилизацию питания
+  HAL_Delay(50);	// задержка на стабилизацию питания
   HAL_FLASH_Unlock();
   __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_OPTVERR);
 
   init_eeprom();
-  write_var(0);
+  uint64_t cur_code = read_var();
+  if(cur_code!=2) write_var(2);
   init_eeprom2();
   gain = read_var2();
   if(gain>3) {
@@ -686,13 +767,14 @@ int main(void)
   HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_RESET);
 
   HAL_ADC_Start_DMA(&hadc1,(uint32_t*) &adc_data,2);
-
-  enc = opus_encoder_create(8000, 1, OPUS_APPLICATION_RESTRICTED_LOWDELAY, &error);
+  enc = opus_encoder_create(8000, 1, OPUS_APPLICATION_VOIP, &error);
+  //enc = opus_encoder_create(8000, 1, OPUS_APPLICATION_RESTRICTED_LOWDELAY, &error);
   opus_encoder_ctl(enc, OPUS_SET_COMPLEXITY(1));
   //opus_encoder_ctl(enc, OPUS_SET_BITRATE(8000));
   dec = opus_decoder_create(8000,1,&error);
 
-  HAL_TIM_Base_Start(&htim6);
+  HAL_TIM_Base_Start(&htim6);	// таймер для периодической отправки данных в цап
+
   HAL_DFSDM_FilterRegularStart_DMA(&hdfsdm1_filter0, (int32_t*)&RecBuf[0][0], 160*2);
 
   init_can_frames();
@@ -707,7 +789,20 @@ int main(void)
 	Error_Handler();
   }
 
-  HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1,(uint32_t*)conv,FRAME_SIZE*2,DAC_ALIGN_12B_L);
+  LL_DMA_ConfigAddresses(DMA1,LL_DMA_CHANNEL_3,(uint32_t)&conv[0],
+		  LL_DAC_DMA_GetRegAddr(DAC1, LL_DAC_CHANNEL_1, LL_DAC_DMA_REG_DATA_12BITS_LEFT_ALIGNED),
+		  LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
+  LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_3, FRAME_SIZE*2);
+  LL_DMA_EnableIT_TE(DMA1, LL_DMA_CHANNEL_3);
+  LL_DMA_EnableIT_HT(DMA1, LL_DMA_CHANNEL_3);
+  LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_3);
+
+  LL_DAC_EnableIT_DMAUDR1(DAC1);
+  LL_DAC_EnableDMAReq(DAC1, LL_DAC_CHANNEL_1);
+  LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_3);
+  LL_DAC_Enable(DAC1, LL_DAC_CHANNEL_1);
+  LL_DAC_EnableTrigger(DAC1, LL_DAC_CHANNEL_1);
+  //HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1,(uint32_t*)conv,FRAME_SIZE*2,DAC_ALIGN_12B_L);
 
   init_can_tx_stack(&can1_tx_stack);
   init_can_tx_stack(&can2_tx_stack);
@@ -776,13 +871,21 @@ int main(void)
 	  }
 	  if((test_2_5_kHz_state==3) && (test_2_5_kHz_tmr>=2000)) test_2_5_kHz_state = 0;
 
-	  if(DmaDacBuffCplt) {
+	  if(DmaDacBuffCplt==1) {convert(1);DmaDacBuffCplt=2;}
+	  if(DmaDacHalfBuffCplt==1) {convert(0);DmaDacHalfBuffCplt=2;}
+	  if(DmaDacBuffCplt==2) {
+		  //HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
 		  decode_work();
+		  //HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_RESET);
 		  DmaDacBuffCplt = 0;
-	  }else if(DmaDacHalfBuffCplt) {
+	  }else if(DmaDacHalfBuffCplt==2) {
+		  //HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
 		  decode_work();
+		 // HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_RESET);
 		  DmaDacHalfBuffCplt=0;
 	  }
+	  //HAL_Delay(1);
+	  //HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 
 	  encode_work();
 	  can_work();
@@ -791,19 +894,28 @@ int main(void)
 		  can_caught_id = 0;
 		  if(button2 || test_2_5_kHz_state || call_flag) HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_SET);
 		  else HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_RESET);
-	  }else HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_SET);
+	  }else
+		  HAL_GPIO_WritePin(SDZ_GPIO_Port,SDZ_Pin,GPIO_PIN_SET);
 
-	  sum_adc[0]+=adc_data[0];
-	  sum_adc[1]+=adc_data[1];
-	  adc_filter_tmr++;
-	  if(adc_filter_tmr>=32) {
-		  adc_filter_tmr=0;
-		  pow_data[0] = (double)sum_adc[0]*33/1016/32+0.5;
-		  pow_data[1] = (double)sum_adc[1]*33/1016/32+6.5;	// добавка 0.6 В для компенсации падения на стабилизаторе
-		  sum_adc[0]=0;
-		  sum_adc[1]=0;
+
+	  if(adc_tmr>=100) {
+		  adc_tmr = 0;
+		  sum_adc[0]+=adc_data[0];
+		  sum_adc[1]+=adc_data[1];
+		  adc_filter_tmr++;
+		  if(adc_filter_tmr>=32) {
+			  adc_filter_tmr=0;
+			  //pow_data[0] = (double)sum_adc[0]*33/1016/32+0.5;
+			  //pow_data[1] = (double)sum_adc[1]*33/1016/32+6.5;	// добавка 0.6 В для компенсации падения на стабилизаторе
+			  //pow_data[0] = (uint32_t)(((double)sum_adc[1]*33*53/20)/32+0.5)>>12;
+			  //pow_data[1] = (uint32_t)(((double)sum_adc[0]*33*43/10)/32+0.5)>>12;
+			  pow_data[0] = (double)sum_adc[1]*33*2.65/32/4096*1.02+0.5;
+			  pow_data[1] = (double)sum_adc[0]*33*4.3/32/4096*1.02+0.5;
+			  if((pow_data[1]<80)&&(pow_data[0]<70)) NVIC_SystemReset();
+			  sum_adc[0]=0;
+			  sum_adc[1]=0;
+		  }
 	  }
-
 
 	  if(button2) {
 		  point_tmr = 0;
@@ -814,14 +926,13 @@ int main(void)
 			  call_offset2 = 0;
 		  }
 	  }
-	  if(led_cnt<100) HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
+	  if(led_cnt<10) HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
 	  else HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_RESET);
-	  led_cnt++;if(led_cnt>=65000) {led_cnt=0;}
-	  if(call_tmr<65000) call_tmr++;else {call_flag=0;}
+
 	  HAL_IWDG_Refresh(&hiwdg);
 	  // спящий режим
-	  HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);
-	  HAL_IWDG_Refresh(&hiwdg);
+	  //HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);
+	  //HAL_IWDG_Refresh(&hiwdg);
 
     /* USER CODE END WHILE */
 
@@ -908,8 +1019,8 @@ void SystemClock_Config(void)
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-	check_can_rx(1);
-	check_can_rx(2);
+	if(hcan==&hcan1) check_can_rx(1);
+	else check_can_rx(2);
 }
 
 
@@ -922,19 +1033,6 @@ void HAL_DFSDM_FilterRegConvHalfCpltCallback(DFSDM_Filter_HandleTypeDef *hdfsdm_
 void HAL_DFSDM_FilterRegConvCpltCallback(DFSDM_Filter_HandleTypeDef *hdfsdm_filter)
 {
 	DmaMicrophoneBuffCplt = 1;
-}
-
-
-
-
-void HAL_DAC_ConvCpltCallbackCh1(DAC_HandleTypeDef *hdac) {
-	DmaDacBuffCplt = 1;
-	convert(1);
-}
-
-void HAL_DAC_ConvHalfCpltCallbackCh1(DAC_HandleTypeDef *hdac) {
-	DmaDacHalfBuffCplt = 1;
-	convert(0);
 }
 
 /* USER CODE END 4 */

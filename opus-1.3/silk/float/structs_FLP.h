@@ -28,8 +28,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef SILK_STRUCTS_FLP_H
 #define SILK_STRUCTS_FLP_H
 
-#include <main.h>
 #include "typedef.h"
+#include "main.h"
 #include "structs.h"
 
 #ifdef __cplusplus

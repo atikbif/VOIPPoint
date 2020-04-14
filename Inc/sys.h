@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : DAC.h
+  * File Name          : SYS.h
   * Description        : This file provides code for the configuration
-  *                      of the DAC instances.
+  *                      of the SYS instances.
   ******************************************************************************
   * @attention
   *
@@ -17,8 +17,8 @@
   ******************************************************************************
   */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __dac_H
-#define __dac_H
+#ifndef __sys_H
+#define __sys_H
 #ifdef __cplusplus
  extern "C" {
 #endif
@@ -34,7 +34,7 @@
 
 /* USER CODE END Private defines */
 
-void MX_DAC1_Init(void);
+void MX_SYS_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
@@ -43,7 +43,7 @@ void MX_DAC1_Init(void);
 #ifdef __cplusplus
 }
 #endif
-#endif /*__ dac_H */
+#endif /*__ sys_H */
 
 /**
   * @}

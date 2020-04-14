@@ -128,6 +128,45 @@
 							<tool id="com.atollic.truestudio.ar.base.554865105" name="Archiver" superClass="com.atollic.truestudio.ar.base"/>
 						</toolChain>
 					</folderInfo>
+					<folderInfo id="com.atollic.truestudio.exe.debug.1518366166.914389844" name="/" resourcePath="Drivers/CMSIS/Source">
+						<toolChain id="com.atollic.truestudio.exe.debug.toolchain.765686955" name="Atollic ARM Tools" superClass="com.atollic.truestudio.exe.debug.toolchain" unusedChildren="">
+							<option id="com.atollic.truestudio.general.runtimelib.667097320.1861562496" name="Runtime Library" superClass="com.atollic.truestudio.general.runtimelib.667097320"/>
+							<option id="com.atollic.truestudio.toolchain_options.mcu.1238081540.83037536" name="Microcontroller" superClass="com.atollic.truestudio.toolchain_options.mcu.1238081540"/>
+							<option id="com.atollic.truestudio.toolchain_options.vendor.1125581691.1321565783" name="Vendor name" superClass="com.atollic.truestudio.toolchain_options.vendor.1125581691"/>
+							<tool id="com.atollic.truestudio.exe.debug.toolchain.as.2010948542" name="Assembler" superClass="com.atollic.truestudio.exe.debug.toolchain.as.1545899283">
+								<inputType id="com.atollic.truestudio.as.input.498504226" name="Input" superClass="com.atollic.truestudio.as.input"/>
+							</tool>
+							<tool id="com.atollic.truestudio.exe.debug.toolchain.gcc.458267649" name="C Compiler" superClass="com.atollic.truestudio.exe.debug.toolchain.gcc.1836874447">
+								<option id="com.atollic.truestudio.gcc.optimization.no_strict_aliasing.1894334263" superClass="com.atollic.truestudio.gcc.optimization.no_strict_aliasing" value="true" valueType="boolean"/>
+								<inputType id="com.atollic.truestudio.gcc.input.932428520" superClass="com.atollic.truestudio.gcc.input"/>
+							</tool>
+							<tool id="com.atollic.truestudio.exe.debug.toolchain.ld.1319433708" name="C Linker" superClass="com.atollic.truestudio.exe.debug.toolchain.ld.1444973427"/>
+							<tool id="com.atollic.truestudio.exe.debug.toolchain.gpp.2035779898" name="C++ Compiler" superClass="com.atollic.truestudio.exe.debug.toolchain.gpp.981298185"/>
+							<tool id="com.atollic.truestudio.exe.debug.toolchain.ldcc.2018836320" name="C++ Linker" superClass="com.atollic.truestudio.exe.debug.toolchain.ldcc.428260"/>
+							<tool id="com.atollic.truestudio.ar.base.1565132492" name="Archiver" superClass="com.atollic.truestudio.ar.base.554865105"/>
+							<tool id="com.atollic.truestudio.exe.debug.toolchain.secoutput.833526462" name="Other" superClass="com.atollic.truestudio.exe.debug.toolchain.secoutput.839033486"/>
+						</toolChain>
+					</folderInfo>
+					<folderInfo id="com.atollic.truestudio.exe.debug.1518366166.1562943597" name="/" resourcePath="opus-1.3">
+						<toolChain id="com.atollic.truestudio.exe.debug.toolchain.1489643862" name="Atollic ARM Tools" superClass="com.atollic.truestudio.exe.debug.toolchain" unusedChildren="">
+							<option id="com.atollic.truestudio.general.runtimelib.667097320.135746399" name="Runtime Library" superClass="com.atollic.truestudio.general.runtimelib.667097320"/>
+							<option id="com.atollic.truestudio.toolchain_options.mcu.1238081540.1436418475" name="Microcontroller" superClass="com.atollic.truestudio.toolchain_options.mcu.1238081540"/>
+							<option id="com.atollic.truestudio.toolchain_options.vendor.1125581691.467402024" name="Vendor name" superClass="com.atollic.truestudio.toolchain_options.vendor.1125581691"/>
+							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="com.atollic.truestudio.exe.debug.toolchain.platform" isAbstract="false" name="Debug platform" osList="all" superClass="com.atollic.truestudio.exe.debug.toolchain.platform"/>
+							<tool id="com.atollic.truestudio.exe.debug.toolchain.as.471582917" name="Assembler" superClass="com.atollic.truestudio.exe.debug.toolchain.as.1545899283">
+								<inputType id="com.atollic.truestudio.as.input.905045661" name="Input" superClass="com.atollic.truestudio.as.input"/>
+							</tool>
+							<tool id="com.atollic.truestudio.exe.debug.toolchain.gcc.1348521175" name="C Compiler" superClass="com.atollic.truestudio.exe.debug.toolchain.gcc.1836874447">
+								<option id="com.atollic.truestudio.gcc.optimization.no_strict_aliasing.386270657" name="No strict aliasing" superClass="com.atollic.truestudio.gcc.optimization.no_strict_aliasing" value="false" valueType="boolean"/>
+								<inputType id="com.atollic.truestudio.gcc.input.878865252" superClass="com.atollic.truestudio.gcc.input"/>
+							</tool>
+							<tool id="com.atollic.truestudio.exe.debug.toolchain.ld.1875641429" name="C Linker" superClass="com.atollic.truestudio.exe.debug.toolchain.ld.1444973427"/>
+							<tool id="com.atollic.truestudio.exe.debug.toolchain.gpp.1503049109" name="C++ Compiler" superClass="com.atollic.truestudio.exe.debug.toolchain.gpp.981298185"/>
+							<tool id="com.atollic.truestudio.exe.debug.toolchain.ldcc.412380517" name="C++ Linker" superClass="com.atollic.truestudio.exe.debug.toolchain.ldcc.428260"/>
+							<tool id="com.atollic.truestudio.ar.base.1201749713" name="Archiver" superClass="com.atollic.truestudio.ar.base.554865105"/>
+							<tool id="com.atollic.truestudio.exe.debug.toolchain.secoutput.135465010" name="Other" superClass="com.atollic.truestudio.exe.debug.toolchain.secoutput.839033486"/>
+						</toolChain>
+					</folderInfo>
 					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1279772866" name="INSTALL" rcbsApplicability="disable" resourcePath="opus-1.3/INSTALL" toolsToInvoke=""/>
 					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.1158146149" name="celt_sources.mk" rcbsApplicability="disable" resourcePath="opus-1.3/celt_sources.mk" toolsToInvoke=""/>
 					<fileInfo id="com.atollic.truestudio.exe.debug.1518366166.450502025" name="config.h.in" rcbsApplicability="disable" resourcePath="opus-1.3/config.h.in" toolsToInvoke=""/>
@@ -195,7 +234,7 @@
 							<option id="com.atollic.truestudio.toolchain_options.mcu.1300812738" name="Microcontroller" superClass="com.atollic.truestudio.toolchain_options.mcu" useByScannerDiscovery="false" value="STM32L496RG" valueType="string"/>
 							<option id="com.atollic.truestudio.toolchain_options.vendor.610200515" name="Vendor name" superClass="com.atollic.truestudio.toolchain_options.vendor" useByScannerDiscovery="false" value="STMicroelectronics" valueType="string"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="com.atollic.truestudio.exe.release.toolchain.platform.2054752829" isAbstract="false" name="Release platform" superClass="com.atollic.truestudio.exe.release.toolchain.platform"/>
-							<builder buildPath="${workspace_loc:/VoipPoint}/Release" customBuilderProperties="toolChainpathType=1|toolChainpathString=C:\\Program Files (x86)\\Atollic\\TrueSTUDIO for STM32 9.3.0\\ARMTools\\bin|" id="com.atollic.truestudio.mbs.builder1.1222194476" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="CDT Internal Builder" superClass="com.atollic.truestudio.mbs.builder1">
+							<builder buildPath="${workspace_loc:/VoipPoint}/Release" customBuilderProperties="toolChainpathString=C:\\Program Files (x86)\\Atollic\\TrueSTUDIO for STM32 9.3.0\\ARMTools\\bin|toolChainpathType=1|" id="com.atollic.truestudio.mbs.builder1.1222194476" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="CDT Internal Builder" superClass="com.atollic.truestudio.mbs.builder1">
 								<outputEntries>
 									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="Release"/>
 								</outputEntries>
@@ -241,11 +280,11 @@
 								<option id="com.atollic.truestudio.gcc.optimization.prep_garbage.586275206" name="Prepare dead code removal " superClass="com.atollic.truestudio.gcc.optimization.prep_garbage" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="com.atollic.truestudio.gcc.optimization.prep_data.1044766448" name="Prepare dead data removal" superClass="com.atollic.truestudio.gcc.optimization.prep_data" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="com.atollic.truestudio.gcc.misc.otherflags.895097519" name="Other options" superClass="com.atollic.truestudio.gcc.misc.otherflags" useByScannerDiscovery="false" value="" valueType="string"/>
-								<option id="com.atollic.truestudio.exe.release.toolchain.gcc.optimization.level.1763412676" name="Optimization Level" superClass="com.atollic.truestudio.exe.release.toolchain.gcc.optimization.level" useByScannerDiscovery="false" value="com.atollic.truestudio.gcc.optimization.level.0s" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.exe.release.toolchain.gcc.optimization.level.1763412676" name="Optimization Level" superClass="com.atollic.truestudio.exe.release.toolchain.gcc.optimization.level" useByScannerDiscovery="false" value="com.atollic.truestudio.gcc.optimization.level.0fast" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.interwork.1173495076" name="Mix ARM/Thumb" superClass="com.atollic.truestudio.common_options.target.interwork" useByScannerDiscovery="false"/>
-								<option id="com.atollic.truestudio.gcc.optimization.no_strict_aliasing.435219028" name="No strict aliasing" superClass="com.atollic.truestudio.gcc.optimization.no_strict_aliasing" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+								<option id="com.atollic.truestudio.gcc.optimization.no_strict_aliasing.435219028" name="No strict aliasing" superClass="com.atollic.truestudio.gcc.optimization.no_strict_aliasing" useByScannerDiscovery="false" value="false" valueType="boolean"/>
 								<inputType id="com.atollic.truestudio.gcc.input.850396938" superClass="com.atollic.truestudio.gcc.input"/>
 							</tool>
 							<tool id="com.atollic.truestudio.exe.release.toolchain.ld.1444973427" name="C Linker" superClass="com.atollic.truestudio.exe.release.toolchain.ld">
@@ -259,6 +298,7 @@
 								<option id="com.atollic.truestudio.ld.misc.linkerflags.1948405714" name="Other options" superClass="com.atollic.truestudio.ld.misc.linkerflags" useByScannerDiscovery="false" value="" valueType="string"/>
 								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.ld.optimization.malloc_page_size.28642509" name="Page size allocation for malloc() " superClass="com.atollic.truestudio.ld.optimization.malloc_page_size" useByScannerDiscovery="false" value="com.atollic.truestudio.ld.optimization.malloc_page_size.4096" valueType="enumerated"/>
 								<inputType id="com.atollic.truestudio.ld.input.1372975870" name="Input" superClass="com.atollic.truestudio.ld.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -302,9 +342,48 @@
 							</tool>
 							<tool id="com.atollic.truestudio.exe.release.toolchain.secoutput.839033486" name="Other" superClass="com.atollic.truestudio.exe.release.toolchain.secoutput">
 								<option id="com.atollic.truestudio.secoutput.general.convert.944683862" name="Convert build output" superClass="com.atollic.truestudio.secoutput.general.convert" useByScannerDiscovery="false" value="true" valueType="boolean"/>
-								<option id="com.atollic.truestudio.mbs.convert.329105211" superClass="com.atollic.truestudio.mbs.convert" useByScannerDiscovery="false" value="com.atollic.truestudio.mbs.convert.bin" valueType="enumerated"/>
+								<option id="com.atollic.truestudio.mbs.convert.329105211" name="Format" superClass="com.atollic.truestudio.mbs.convert" useByScannerDiscovery="false" value="com.atollic.truestudio.mbs.convert.bin" valueType="enumerated"/>
 							</tool>
 							<tool id="com.atollic.truestudio.ar.base.1459911695" name="Archiver" superClass="com.atollic.truestudio.ar.base"/>
+						</toolChain>
+					</folderInfo>
+					<folderInfo id="com.atollic.truestudio.configuration.release.1518366166.1303074916" name="/" resourcePath="Drivers/CMSIS/Source">
+						<toolChain id="com.atollic.truestudio.exe.release.toolchain.53287235" name="Atollic ARM Tools" superClass="com.atollic.truestudio.exe.release.toolchain" unusedChildren="">
+							<option id="com.atollic.truestudio.general.runtimelib.652319601.283452448" name="Runtime Library" superClass="com.atollic.truestudio.general.runtimelib.652319601"/>
+							<option id="com.atollic.truestudio.toolchain_options.mcu.1300812738.1780633614" name="Microcontroller" superClass="com.atollic.truestudio.toolchain_options.mcu.1300812738"/>
+							<option id="com.atollic.truestudio.toolchain_options.vendor.610200515.251029043" name="Vendor name" superClass="com.atollic.truestudio.toolchain_options.vendor.610200515"/>
+							<tool id="com.atollic.truestudio.exe.release.toolchain.as.468264123" name="Assembler" superClass="com.atollic.truestudio.exe.release.toolchain.as.1545899283">
+								<inputType id="com.atollic.truestudio.as.input.2070772294" name="Input" superClass="com.atollic.truestudio.as.input"/>
+							</tool>
+							<tool id="com.atollic.truestudio.exe.release.toolchain.gcc.582610140" name="C Compiler" superClass="com.atollic.truestudio.exe.release.toolchain.gcc.1836874447">
+								<option id="com.atollic.truestudio.gcc.optimization.no_strict_aliasing.1900890111" superClass="com.atollic.truestudio.gcc.optimization.no_strict_aliasing" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+								<inputType id="com.atollic.truestudio.gcc.input.1997999468" superClass="com.atollic.truestudio.gcc.input"/>
+							</tool>
+							<tool id="com.atollic.truestudio.exe.release.toolchain.ld.1585532486" name="C Linker" superClass="com.atollic.truestudio.exe.release.toolchain.ld.1444973427"/>
+							<tool id="com.atollic.truestudio.exe.release.toolchain.gpp.710525734" name="C++ Compiler" superClass="com.atollic.truestudio.exe.release.toolchain.gpp.981298185"/>
+							<tool id="com.atollic.truestudio.exe.release.toolchain.ldcc.249004512" name="C++ Linker" superClass="com.atollic.truestudio.exe.release.toolchain.ldcc.428260"/>
+							<tool id="com.atollic.truestudio.ar.base.979685822" name="Archiver" superClass="com.atollic.truestudio.ar.base.1459911695"/>
+							<tool id="com.atollic.truestudio.exe.release.toolchain.secoutput.319327741" name="Other" superClass="com.atollic.truestudio.exe.release.toolchain.secoutput.839033486"/>
+						</toolChain>
+					</folderInfo>
+					<folderInfo id="com.atollic.truestudio.configuration.release.1518366166.1191234204" name="/" resourcePath="opus-1.3">
+						<toolChain id="com.atollic.truestudio.exe.release.toolchain.1779645772" name="Atollic ARM Tools" superClass="com.atollic.truestudio.exe.release.toolchain" unusedChildren="">
+							<option id="com.atollic.truestudio.general.runtimelib.652319601.258861577" name="Runtime Library" superClass="com.atollic.truestudio.general.runtimelib.652319601"/>
+							<option id="com.atollic.truestudio.toolchain_options.mcu.1300812738.794038384" name="Microcontroller" superClass="com.atollic.truestudio.toolchain_options.mcu.1300812738"/>
+							<option id="com.atollic.truestudio.toolchain_options.vendor.610200515.1292455232" name="Vendor name" superClass="com.atollic.truestudio.toolchain_options.vendor.610200515"/>
+							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="com.atollic.truestudio.exe.release.toolchain.platform" isAbstract="false" name="release platform" superClass="com.atollic.truestudio.exe.release.toolchain.platform"/>
+							<tool id="com.atollic.truestudio.exe.release.toolchain.as.1124667725" name="Assembler" superClass="com.atollic.truestudio.exe.release.toolchain.as.1545899283">
+								<inputType id="com.atollic.truestudio.as.input.1326026405" name="Input" superClass="com.atollic.truestudio.as.input"/>
+							</tool>
+							<tool id="com.atollic.truestudio.exe.release.toolchain.gcc.1085535738" name="C Compiler" superClass="com.atollic.truestudio.exe.release.toolchain.gcc.1836874447">
+								<option id="com.atollic.truestudio.exe.release.toolchain.gcc.optimization.level.109547640" name="Optimization Level" superClass="com.atollic.truestudio.exe.release.toolchain.gcc.optimization.level" useByScannerDiscovery="false" value="com.atollic.truestudio.gcc.optimization.level.0fast" valueType="enumerated"/>
+								<inputType id="com.atollic.truestudio.gcc.input.660333902" superClass="com.atollic.truestudio.gcc.input"/>
+							</tool>
+							<tool id="com.atollic.truestudio.exe.release.toolchain.ld.409025524" name="C Linker" superClass="com.atollic.truestudio.exe.release.toolchain.ld.1444973427"/>
+							<tool id="com.atollic.truestudio.exe.release.toolchain.gpp.192312937" name="C++ Compiler" superClass="com.atollic.truestudio.exe.release.toolchain.gpp.981298185"/>
+							<tool id="com.atollic.truestudio.exe.release.toolchain.ldcc.1100749579" name="C++ Linker" superClass="com.atollic.truestudio.exe.release.toolchain.ldcc.428260"/>
+							<tool id="com.atollic.truestudio.ar.base.687394360" name="Archiver" superClass="com.atollic.truestudio.ar.base.1459911695"/>
+							<tool id="com.atollic.truestudio.exe.release.toolchain.secoutput.1732907094" name="Other" superClass="com.atollic.truestudio.exe.release.toolchain.secoutput.839033486"/>
 						</toolChain>
 					</folderInfo>
 					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.622974002" name="INSTALL" rcbsApplicability="disable" resourcePath="opus-1.3/INSTALL" toolsToInvoke=""/>
@@ -347,7 +426,7 @@
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Src"/>
-						<entry excluding="src/opus_demo.c|src/repacketizer_demo.c|src/opus_compare.c|silk/fixed/x86|silk/fixed/mips|silk/fixed/arm|silk/x86|silk/tests|silk/mips|silk/float|silk/arm|celt/opus_custom_demo.c|celt/x86|celt/tests|celt/mips|celt/arm|test-driver|silk_sources.mk|silk_headers.mk|README|package_version|opus-uninstalled.pc.in|opus.pc.in|opus.m4|opus_sources.mk|opus_headers.mk|NEWS|missing|Makefile.unix|Makefile.mips|Makefile.in|Makefile.am|ltmain.sh|install-sh|INSTALL|depcomp|COPYING|configure.ac|configure|config.sub|config.h.in|config.guess|compile|ChangeLog|celt_sources.mk|celt_headers.mk|AUTHORS|aclocal.m4|win32|tests|m4|doc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="opus-1.3"/>
+						<entry excluding="m4|src/opus_demo.c|src/repacketizer_demo.c|src/opus_compare.c|silk/fixed/x86|silk/fixed/mips|silk/fixed/arm|silk/x86|silk/tests|silk/mips|silk/float|silk/arm|celt/opus_custom_demo.c|celt/x86|celt/tests|celt/mips|celt/arm|test-driver|silk_sources.mk|silk_headers.mk|README|package_version|opus-uninstalled.pc.in|opus.pc.in|opus.m4|opus_sources.mk|opus_headers.mk|NEWS|missing|Makefile.unix|Makefile.mips|Makefile.in|Makefile.am|ltmain.sh|install-sh|INSTALL|depcomp|COPYING|configure.ac|configure|config.sub|config.h.in|config.guess|compile|ChangeLog|celt_sources.mk|celt_headers.mk|AUTHORS|aclocal.m4|win32|tests|doc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="opus-1.3"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="startup"/>
 					</sourceEntries>
 				</configuration>

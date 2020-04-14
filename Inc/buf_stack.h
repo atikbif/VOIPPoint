@@ -10,22 +10,18 @@
 
 #include <stdint.h>
 
-#define STACK_SIZE		6
+#define STACK_SIZE		8
 
-typedef struct {
-	uint8_t* data;
-	uint8_t state;
-	uint16_t length;
-}stack_coil;
-
-typedef struct {
-	stack_coil coils[STACK_SIZE];
+typedef struct  __attribute__((packed, aligned(4))){
+	uint16_t state[STACK_SIZE];
+	uint16_t length[STACK_SIZE];
 	uint16_t wr_pos;
 	uint16_t rd_pos;
-	uint16_t max_coil_data_length;
+	uint16_t length_limit;
+	uint8_t* ptr;
 } buf_stack;
 
-void init_buf_stack(buf_stack *stack, uint8_t *data_ptr,uint16_t max_coil_length);
+void init_buf_stack(buf_stack *stack, uint8_t *data_ptr,uint16_t length_limit);
 uint8_t add_data_to_stack(buf_stack *stack, uint8_t *data, uint16_t length);
 uint16_t get_data_from_stack(buf_stack *stack, uint8_t *ptr);
 

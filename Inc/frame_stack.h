@@ -4,11 +4,11 @@
 
 #include <stdint.h>
 
-#define AUDIO_FRAME_COUNT			6
-#define CAN_FRAME_COUNT				6
+//#define AUDIO_FRAME_COUNT			6
+//#define CAN_FRAME_COUNT				6
 
-#define AUDIO_BUF_SIZE		160
-#define CAN_BUF_SIZE		64
+#define AUDIO_BUF_SIZE		((uint16_t)160)
+#define CAN_BUF_SIZE		((uint16_t)100)
 
 // буфера для хранения CAN и аудиопакетов на базе buf_stack
 

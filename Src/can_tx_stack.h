@@ -20,7 +20,7 @@
 #define LOW_PACKET_PRIORITY		1
 #define HIGH_PACKET_PRIORITY	2
 
-typedef struct {
+typedef struct  __attribute__((packed, aligned(4))){
 	uint8_t data[CAN_TX_DATA_SIZE];
 	uint32_t id;
 	uint8_t length;
@@ -28,7 +28,7 @@ typedef struct {
 	uint8_t priority;
 } tx_stack_data;
 
-typedef struct {
+typedef struct  __attribute__((packed, aligned(4))){
 	tx_stack_data packet[CAN_TX_STACK_LENGTH];
 	uint16_t read_position;
 	uint16_t write_position;

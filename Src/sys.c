@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : DAC.h
+  * File Name          : SYS.c
   * Description        : This file provides code for the configuration
-  *                      of the DAC instances.
+  *                      of the SYS instances.
   ******************************************************************************
   * @attention
   *
@@ -16,41 +16,22 @@
   *
   ******************************************************************************
   */
-/* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __dac_H
-#define __dac_H
-#ifdef __cplusplus
- extern "C" {
-#endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "sys.h"
 
-/* USER CODE BEGIN Includes */
+/* USER CODE BEGIN 0 */
 
-/* USER CODE END Includes */
+/* USER CODE END 0 */
 
-/* USER CODE BEGIN Private defines */
+/* SYS init function */
+void MX_SYS_Init(void)
+{
 
-/* USER CODE END Private defines */
-
-void MX_DAC1_Init(void);
-
-/* USER CODE BEGIN Prototypes */
-
-/* USER CODE END Prototypes */
-
-#ifdef __cplusplus
 }
-#endif
-#endif /*__ dac_H */
 
-/**
-  * @}
-  */
+/* USER CODE BEGIN 1 */
 
-/**
-  * @}
-  */
+/* USER CODE END 1 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

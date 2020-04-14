@@ -34,7 +34,7 @@ void rx1_callback(uint8_t* rx_ptr,uint16_t rx_cnt) {
 				discrete_state &= ~(1<<2);
 			}
 			break;
-		case 0x31:
+		case 0x31:	// вход 1
 			if(rx_ptr[1]==0x03) {	// обрыв
 				discrete_state |= 1<<9;
 				discrete_state &= ~(1<<10);
@@ -53,7 +53,7 @@ void rx1_callback(uint8_t* rx_ptr,uint16_t rx_cnt) {
 				discrete_state |= 1<<10;
 			}
 			break;
-		case 0x32:
+		case 0x32:	// вход 2
 			if(rx_ptr[1]==0x03) {	// обрыв
 				discrete_state |= 1<<12;
 				discrete_state &= ~(1<<13);

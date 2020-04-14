@@ -28,10 +28,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef SILK_MAIN_FIX_H
 #define SILK_MAIN_FIX_H
 
-#include <main.h>
 #include "SigProc_FIX.h"
 #include "structs_FIX.h"
 #include "control.h"
+#include "main.h"
 #include "PLC.h"
 #include "debug.h"
 #include "entenc.h"

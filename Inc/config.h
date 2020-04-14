@@ -51,6 +51,7 @@ extern void vPortFree( void *pv );
 #define FIXED_POINT           1
 
 #define OPUS_BUILD            1
+//#define OPUS_HAVE_RTCD		  1
 
 /*static OPUS_INLINE void *opus_alloc (size_t size)
 {

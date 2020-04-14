@@ -8,6 +8,7 @@
 #include "buf_stack.h"
 #include <cmsis_gcc.h>
 #include "main.h"
+#include <string.h>
 
 #define EMPTY_PACKET	0
 #define BUSY_PACKET		1
@@ -17,83 +18,109 @@ static uint8_t is_stack_full(buf_stack *stack) {
 	uint8_t cnt = 0;
 	uint8_t i = 0;
 	for(i=0;i<STACK_SIZE;i++) {
-		if(stack->coils[i].state!=EMPTY_PACKET) cnt++;
+		if(stack->state[i]!=EMPTY_PACKET) cnt++;
 	}
 	if(cnt==STACK_SIZE) return 1;
 	return 0;
 }
 
-static uint16_t atomicWrPosIncrement(uint16_t * ptr)
+/*static uint16_t atomicWrPosIncrement(uint16_t * ptr)
 {
 	uint16_t oldValue, newValue;
-	uint8_t try_num = 0;
-	do
-	{
-		oldValue = __LDREXH(ptr);
-		try_num++;
-		if(try_num>3) break;
-		newValue = oldValue + 1;
-		if(newValue>=STACK_SIZE) newValue = 0;
-	}while(__STREXH(newValue, ptr));
+//	uint8_t try_num = 0;
+//	do
+//	{
+//		oldValue = __LDREXH(ptr);
+//		newValue = oldValue + 1;
+//		if(newValue>=STACK_SIZE) newValue = 0;
+//		try_num++;
+//		if(try_num>100) break;
+//	}while(__STREXH(newValue, ptr));
+//	if(oldValue>=STACK_SIZE) oldValue = 0;
+	newValue = oldValue = *ptr;
+	newValue++;
+	if(newValue>=STACK_SIZE) newValue = 0;
+	if(oldValue>=STACK_SIZE) oldValue = 0;
+	(*ptr)=newValue;
 	return oldValue;
-}
+}*/
 
-void init_buf_stack(buf_stack *stack, uint8_t *data_ptr,uint16_t max_coil_length) {
+void init_buf_stack(buf_stack *stack, uint8_t *data_ptr,uint16_t length_limit) {
 	uint16_t i=0;
-	uint16_t offset = 0;
+	//uint16_t offset = 0;
 	stack->rd_pos = 0;
 	stack->wr_pos = 0;
-	stack->max_coil_data_length = max_coil_length;
-	stack->coils->data = data_ptr;
+	stack->length_limit = length_limit;
+	stack->ptr = data_ptr;
 	for(i=0;i<STACK_SIZE;i++) {
-		stack->coils[i].state = EMPTY_PACKET;
-		stack->coils[i].length = 0;
-		stack->coils[i].data = data_ptr + offset;
-		offset += max_coil_length;
+		stack->state[i] = EMPTY_PACKET;
+		stack->length[i] = 0;
 	}
 }
 
 uint8_t add_data_to_stack(buf_stack *stack, uint8_t *data, uint16_t length) {
 	uint16_t i = 0;
 	uint16_t wr_pos = 0;
-	uint8_t try_num = 0;
-	if(length>stack->max_coil_data_length) length = stack->max_coil_data_length;
-	wr_pos = atomicWrPosIncrement(&(stack->wr_pos));
-	//do{
-	if(stack->coils[wr_pos].state!=EMPTY_PACKET && is_stack_full(stack)) {
-		stack->rd_pos = 0;
-		stack->wr_pos = 0;
-		for(i=0;i<STACK_SIZE;i++) {
-			stack->coils[i].state = EMPTY_PACKET;
-			stack->coils[i].length = 0;
-		}
+	uint16_t start_pos = 0;
+	uint16_t end_pos = 0;
+	uint16_t limit_pos = 0;
+
+	wr_pos = stack->wr_pos;
+	// проверка допустимости индекса записи
+	if(wr_pos>=STACK_SIZE) {
+		stack->wr_pos=0;
+		return 0;
 	}
-		try_num++;if(try_num>3) return 0;
-		__LDREXB(&(stack->coils[wr_pos].state));
-		stack->coils[wr_pos].state = BUSY_PACKET;
-		for(i=0;i<length;++i) stack->coils[wr_pos].data[i] = data[i];
-		stack->coils[wr_pos].length = length;
-		stack->coils[wr_pos].state = READY_PACKET;
-	//}while(__STREXB(READY_PACKET, &(stack->coils[wr_pos].state)));
+	// проверка заполненности стэка
+	if(stack->state[wr_pos]!=EMPTY_PACKET && is_stack_full(stack)) {
+		stack->rd_pos = 0;
+		stack->wr_pos = 1;
+		for(i=0;i<STACK_SIZE;i++) {
+			stack->state[i] = EMPTY_PACKET;
+			stack->length[i] = 0;
+		}
+		wr_pos=0;
+	}
+	if(length>stack->length_limit) return 0; // проверка допустимой длины
+	// проверка вместимости данных в стэк
+	start_pos = wr_pos*stack->length_limit;
+	end_pos = start_pos + length;
+	limit_pos = ((uint16_t)STACK_SIZE) * (stack->length_limit);
+	if((start_pos>=limit_pos) || (end_pos>limit_pos)) return 0;
+
+	// запись данных
+	stack->state[wr_pos] = BUSY_PACKET;
+	stack->length[wr_pos] = length;
+	memcpy(&(stack->ptr[start_pos]),&data[0],length);
+	stack->state[wr_pos] = READY_PACKET;
+	wr_pos++;
+	if(wr_pos>=STACK_SIZE) wr_pos=0;
+	stack->wr_pos = wr_pos;
 	return 1;
 }
 
 uint16_t get_data_from_stack(buf_stack *stack, uint8_t *ptr) {
-	uint16_t i = 0;
 	uint16_t res = 0;
-	uint16_t rd_pos = 0;
-	uint8_t try_num = 0;
-
-	if(stack->coils[stack->rd_pos].state==READY_PACKET) {
-		rd_pos = atomicWrPosIncrement(&(stack->rd_pos));
-		//do{
-			try_num++;if(try_num>3) return 0;
-			__LDREXB(&(stack->coils[rd_pos].state));
-			stack->coils[rd_pos].state = BUSY_PACKET;
-			res = stack->coils[rd_pos].length;
-			for(i=0;i<res;++i) ptr[i] = stack->coils[rd_pos].data[i];
-			stack->coils[rd_pos].state = EMPTY_PACKET;
-		//}while(__STREXB(EMPTY_PACKET, &(stack->coils[rd_pos].state)));
+	uint16_t start_pos = 0;
+	uint16_t end_pos = 0;
+	uint16_t limit_pos = 0;
+	uint16_t rd_pos = stack->rd_pos;
+	if(rd_pos>=STACK_SIZE) {
+		stack->rd_pos=0;
+		return 0;
+	}
+	if(stack->state[rd_pos]==READY_PACKET) {
+		start_pos = rd_pos*stack->length_limit;
+		end_pos = start_pos + stack->length[rd_pos];
+		limit_pos = ((uint16_t)STACK_SIZE) * (stack->length_limit);
+		if((start_pos>=limit_pos) || (end_pos>limit_pos) || ((stack->length[rd_pos])>stack->length_limit)) {stack->length[rd_pos]=0;}
+		stack->state[rd_pos] = BUSY_PACKET;
+		res = stack->length[rd_pos];
+		memcpy(&(ptr[0]),&(stack->ptr[start_pos]),res);
+		stack->state[rd_pos] = EMPTY_PACKET;
+		rd_pos++;
+		if(rd_pos>=STACK_SIZE) rd_pos = 0;
+		stack->rd_pos=rd_pos;
 		return res;
 	}
 	return 0;
