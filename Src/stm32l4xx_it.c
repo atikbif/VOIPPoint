@@ -69,7 +69,9 @@ extern uint8_t tx1_buf[UART_BUF_SISE];
 extern uint16_t rx1_cnt;					// счётчик принятых по UART байт
 extern uint16_t rx1_tmr;					// таймер тишины для определения конца пакета входящих по UART данных
 
-extern uint16_t packet_tmr;					// таймер активности звукового выхода
+// таймер обнаружения входящего аудиопакета для воспроизведения
+// при обнаружении сбрасывается в 0, иначе инкремент каждую миллисекунду
+extern uint16_t packet_tmr;
 extern volatile uint16_t test_2_5_kHz_tmr;	// вспомогательный таймер для проверки динамиков
 extern uint8_t test_2_5_kHz_state;			// этап проверки динамиков
 

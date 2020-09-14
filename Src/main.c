@@ -192,13 +192,28 @@ arm_rfft_fast_instance_f32 S;
 float32_t base_2_5_kHz_level;		// уровень фонового сигнала микрофона на 2.5 кГц
 float32_t test_2_5_kHz_level;		// уровень сигнала микрофона на 2.5 кГц во время проверки динамиков
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// ПРОВЕРКА СВЯЗКИ МИКРОФОН-ДИНАМИК
 
+// вспомогательный таймер
 volatile uint16_t test_2_5_kHz_tmr = 0;
-uint8_t test_2_5_kHz_res = 0;
-uint8_t test_2_5_kHz_state = 0;
-uint8_t test_2_5_kHz_check_enable = 0;
-uint8_t check_cmd = 0;
 
+// результат проверки
+// 1 - система исправна
+// 0 - неисправна
+uint8_t test_2_5_kHz_res = 0;
+
+// состояние проверки связки микрофон/динамик
+// 0 - не выполняется
+// 1 - определение фонового уровня шума на 2.5 кГц и после этого подача синуса 2.5 кГц на динамик
+// 2 - ожидание 1 секунды и после этого определение уровня шума на 2.5 кГц, отключение синуса
+// 3 - ожидание ещё одной секунды и после этого завершение теста
+uint8_t test_2_5_kHz_state = 0;
+
+uint8_t test_2_5_kHz_check_enable = 0;	// разрешение проверки ()возможно избыточное
+uint8_t check_cmd = 0;	// запрос на проверку от шлюза
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 uint8_t pos_in_group = 1;			// номер точки в цепочке шлюза
 extern uint8_t search_next_try;		// номер попытки поиска следующей точки
@@ -226,22 +241,23 @@ uint8_t point_flag = 0;
 uint16_t point_tmr = 0;
 
 
-// переменные для ацп
+// переменные для ацп (напряжение аккумулятора и питания)
 uint16_t adc_data[2] = {0,0};	// непосредственно данные
 uint32_t sum_adc[2] ={0,0};		// массив для усреднения
-uint16_t adc_filter_tmr = 0;
+uint16_t adc_filter_tmr = 0;	// счётчик накопленных данных
+uint16_t adc_tmr=0;				// таймер суммирования данных фильтром
 
 // данные пересчитанные в десятые доли вольт
-uint8_t prev_pow_data[2] = {0,0};
-uint8_t pow_data[2] = {0,0};
+uint8_t prev_pow_data[2] = {0,0};	// для анализа изменения данных
+uint8_t pow_data[2] = {0,0};	// напряжение аккумулятора и питания 1 ед - 0.1В
 
-uint64_t gain = 0; // текущий уровень громкости
-// 0 - максимальная
+uint64_t gain = 0; // коэффициент ослабления громкости
+// 0 - максимальная громкость
 // 1 - ослабление в 2 раза
 // 2 - в 4 раза
 // 3 - в 8 раз
 
-uint16_t adc_tmr=0;
+// вспомогательный счётчик для управления вспышками светодиода
 uint16_t led_cnt = 0;
 
 /* USER CODE END PV */
@@ -256,10 +272,13 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 
 // проверка необходимо ли воспроизводить пришедший аудиопакет
+// packet_id - CAN идентификатор пакета
+
 uint8_t static check_id_priority(uint32_t packet_id) {
 	id_field *input_id = (id_field*)(&packet_id);
 	id_field *cur_id = (id_field*)(&can_caught_id);
 	if(input_id->type==POINT_TO_PC) return 0; // точка компьютер игнорируем
+	// входящий пакет - информация об авариях или их снятии (самый высокий приоритет)
 	if(input_id->type==AUDIO_INFO) {
 		if(cur_id->type!=AUDIO_INFO || ((cur_id->type==AUDIO_INFO) && (cur_id->group_addr==input_id->group_addr))) {
 			*cur_id = *input_id;
@@ -267,8 +286,12 @@ uint8_t static check_id_priority(uint32_t packet_id) {
 			return 1;
 		}
 	}
+
+	// если прошлый захваченный пакет был информационным (с оповещением) остальные пакеты игнорируются
+	// пока по таймеру не сбросится cur_id или не придёт новый информационный пакет
 	if(cur_id->type==AUDIO_INFO) return 0;
-	if(input_id->type==PC_TO_ALL) { // компьютер ко всем
+
+	if(input_id->type==PC_TO_ALL) { // компьютер ко всем (второй по приоритету тип аудиопакета)
 		*cur_id = *input_id;
 		point_flag = 0;
 		return 1;
@@ -277,7 +300,7 @@ uint8_t static check_id_priority(uint32_t packet_id) {
 		if((input_id->group_addr == group_id) && (input_id->point_addr == pos_in_group)) { //совпадает адрес группы и адрес точки
 			*cur_id = *input_id;
 			point_tmr = 0;
-			point_flag = 1;
+			point_flag = 1; // ответные пакеты должны идти компьютеру а не всем точкам сети
 			return 1;
 		}
 		return 0;
@@ -290,12 +313,13 @@ uint8_t static check_id_priority(uint32_t packet_id) {
 		}
 		return 0;
 	}
-	if(input_id->type==POINT_TO_ALL || input_id->type==POINT_CALL) { // точка все
+	if(input_id->type==POINT_TO_ALL || input_id->type==POINT_CALL) { // точка все или сигнал вызова с другой точки
 		if(cur_id->type==UNKNOWN_TYPE) {	// пакеты не захвачены
 			*cur_id = *input_id;
 			point_flag = 0;
 			return 1;
 		}
+		// если последний последний активный пакет не от компьютера
 		if(cur_id->type!=PC_TO_ALL && cur_id->type!=PC_TO_GROUP && cur_id->type!=PC_TO_POINT)  {
 			// ранее захваченный источник
 			if(cur_id->group_addr == input_id->group_addr && cur_id->point_addr == input_id->point_addr) {
@@ -308,7 +332,6 @@ uint8_t static check_id_priority(uint32_t packet_id) {
 				*cur_id = *input_id;
 				point_flag = 0;
 				return 1;
-
 			}
 		}
 		return 0;
@@ -330,53 +353,74 @@ static void check_can_rx(uint8_t can_num) {
 		if(HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK) {
 			p_id = (id_field*)(&(RxHeader.ExtId));
 			if(p_id->cmd==AUDIO_PACKET) { // аудиопоток
+				// если точка не передаёт звук или сигнал вызова и входящий пакет прошёл проверку
 				if(button1==0 && button2==0 && check_id_priority(RxHeader.ExtId)) {
-					packet_tmr = 0;
+					packet_tmr = 0;	// таймер обнаружения входящего аудиопакета для воспроизведения
+					// сигнал вызова от другой точки
 					if(p_id->type==POINT_CALL) {
 						call_flag = 1;
 						call_tmr=0;
-						//HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 					}else {
-						cur_num = p_id->param & 0x0F;
-						cnt = (p_id->param & 0xFF)>> 4;
+						// звук формата 160 двухбайтных переменных кодируется опусом
+						// результат запаковывается в несколько кан пакетов
+						// в каждом аудиопакете передаётся текущий номер пакета и общее число пакетов
+						cur_num = p_id->param & 0x0F;		// текущий номер пакета
+						cnt = (p_id->param & 0xFF)>> 4;		// число пакетов
 						if(cur_num) {
-							if(cur_num==cnt) {
+							if(cur_num==cnt) {	// последний пакет
+								// проверка типа пакета (возможно избыточная т.к. аналогичная выполняется в check_id_priority)
 							  if(p_id->type==POINT_TO_ALL || p_id->type==PC_TO_ALL || p_id->type==PC_TO_POINT || p_id->type==PC_TO_GROUP || p_id->type==AUDIO_INFO) { // точка все
-								  j = (cur_num-1)*8;
+								  j = (cur_num-1)*8;	// смещение в буфере
+								  // последний пакет может быть длиной от 1 до 8 байт (RxHeader.DLC)
 								  for(i=0;i<RxHeader.DLC;i++) {
 									  if(j+i<OPUS_PACKET_MAX_LENGTH) can_priority_frame[j+i]=RxData[i];
 								  }
+								  // итоговая длина пакета
 								  can_pckt_length = (cnt-1)*8+RxHeader.DLC;
+								  // проверка на ограничение длины под выделенные буфера
 								  if(can_pckt_length>OPUS_PACKET_MAX_LENGTH) can_pckt_length = OPUS_PACKET_MAX_LENGTH;
 								  for(i=0;i<can_pckt_length;i++) {
 									  can_frame[i]=can_priority_frame[i];
 								  }
+								  // добавление пакета в стек закодированных опусом аудиопакетов для воспроизведения
 								  add_can_frame(&can_frame[0],can_pckt_length);
 							  }
 							}else {
-							  j = (cur_num-1)*8;
-							  for(i=0;i<8;i++) { if(j+i<OPUS_PACKET_MAX_LENGTH) can_priority_frame[j+i]=RxData[i]; }
+								// пакет копируется в промежуточный буфер
+								// смещение в зависимости от номера пакета
+								// если пакет не последний то длина данных 8 байт
+								j = (cur_num-1)*8;
+								for(i=0;i<8;i++) { if(j+i<OPUS_PACKET_MAX_LENGTH) can_priority_frame[j+i]=RxData[i]; }
 							}
 						}
 					}
 				}
-			}else if(p_id->cmd==LAST_POINT) {
+			}else if(p_id->cmd==LAST_POINT) {	// в цепи после текущей точки обнаружена последняя точка
 				if(p_id->group_addr == group_id) {
-					search_next_try = 0;	// ответ от следующей в цепочке точки
+					// если группа совпадает и обнаружена последняя в цепи точка значит что после текущей точки есть как минимум ещё одна
+					// поэтому выставляется признак обнаружения следующей в цепи точки
+					search_next_try = 0;
 				}
 			}else if(p_id->cmd==FIND_NEXT_POINT) {
-				if(p_id->param==FIND_REQUEST) {	// запрос от предыдущей в цепочке точки
+				if(p_id->param==FIND_REQUEST) {
+					// запрос от предыдущей точки
+					// установка адреса точки на единицу больше чем у предшественника
 					pos_in_group = RxData[0] + 1;
-					next_point(FIND_ANSWER);	// отправить ответ
+					// отправить ответ
+					next_point(FIND_ANSWER);
 				}else if(p_id->param==FIND_ANSWER) {
-					search_next_try = 0;	// ответ от следующей в цепочке точки
+					// ответ от следующей в цепочке точки
+					search_next_try = 0;
 				}
 			}else if(p_id->cmd==SCAN_GROUP) {
-				if(can_num==1) {	// транслировать запрос сканирования дальше
-					check_cmd = 1;	// запустить проверку точки
+				// если запрос по входящему CAN порту
+				if(can_num==1) {
+					check_cmd = 1;	// запустить проверку микрофона и динамиков точки
 				}
 			}else if(p_id->cmd==SET_ALL_OUTS) {	// установить выход
 				if(p_id->group_addr == group_id) {
+					// RxData[0] - номер выхода
+					// RxData[1] - требуемое состояние выхода
 					if(RxData[0]==1) {
 						if(RxData[1]) discrete_state |= 0x4000;else discrete_state &= ~(0x4000);
 					}else if(RxData[0]==2) {
@@ -384,15 +428,18 @@ static void check_can_rx(uint8_t can_num) {
 					}
 				}
 			}else if(p_id->cmd==GET_POINTS_STATE) {
+				// запрос шлюзом состояния точек
 				group_id = p_id ->group_addr;
 				send_point_state(1);
 			}else if(p_id->cmd==GATE_STATE) {
 				if(can_num==1) {
 					group_id = p_id ->group_addr;
+					// в состоянии шлюза передаются требуемые в точках состояния выходов
 					if(RxData[1]&(1<<3)) {discrete_state |= 0x4000;}else{discrete_state &= ~(0x4000);}
 					if(RxData[1]&(1<<4)) {discrete_state |= 0x8000;}else{discrete_state &= ~(0x8000);}
 				}
 			}else if(p_id->point_addr == pos_in_group && p_id->group_addr == group_id && p_id->cmd==BOOT) {
+				// команда переключения точки в режим загрузчика
 				if(p_id->type==BOOT_SWITCH) {
 					HAL_FLASH_Unlock();
 					EraseInitStruct.TypeErase   = FLASH_TYPEERASE_PAGES;
@@ -404,20 +451,31 @@ static void check_can_rx(uint8_t can_num) {
 				}
 			}
 			else if(p_id->point_addr == pos_in_group && p_id->group_addr == group_id && p_id->cmd==POINT_CONFIG) {
+				// команда записи в точку конфигурации
+				// RxData[0] - коэффициент ослабления звука
 				HAL_FLASH_Unlock();
 				if(RxData[0]>4) RxData[0]=0;
 				gain = RxData[0];
 				write_var2(RxData[0]);
+				// отправить состояние точки шлюзу для подтверждения
 				send_point_state(1);
 				send_point_state(1);
 			}
+			// фильтр для недопуска сквозного прохождения пакетов от точек в своей группе
 			if(p_id->group_addr == group_id) {
 				if(p_id->cmd==FIND_NEXT_POINT) return;
+				// не пропускать пакеты LAST_POINT  выходного кана если текущая точка установлена как концевая
 				if(limit_switch && p_id->cmd==LAST_POINT && can_num==2) return;
 			}
-			// ретрансляция пакетов
+			// ретрансляция пакетов (сквозное прохождение)
+			// если пакет не адресован этой точке он проходит сквозь точку
+			// пакеты с кан1 транслируются в кан2 и наоборот
 			if(!(p_id->point_addr == pos_in_group && p_id->group_addr == group_id)) {
 				packet.id = RxHeader.ExtId;
+				// для звуковых пакетов более низкий приоритет
+				// приоритет важен при большом числе пакетов в очереди на передачу
+				// первыми идут пакеты с более высоким приоритетом
+				// для каждого приоритета есть свой стек пакетов
 				if(p_id->cmd==AUDIO_PACKET) {packet.priority = LOW_PACKET_PRIORITY;}
 				else packet.priority = HIGH_PACKET_PRIORITY;
 				packet.length = RxHeader.DLC;
@@ -441,10 +499,12 @@ static void check_can_rx(uint8_t can_num) {
 void can_write_from_stack() {
 	tx_stack_data packet;
 	uint8_t i = 0;
-	uint8_t try = 0;
+	uint8_t try = 0;	// счётчик попыток извлечения пакетов из стека
+	// проверка доступности аппаратного кан1 для передачи
 	while(HAL_CAN_GetTxMailboxesFreeLevel(&hcan1)!=0) {
 		try++;
 		if(try>=10) return;
+		// высокоприоритетный стек
 		if(get_tx_can_packet(&can1_tx_stack_pr,&packet)) {
 			if(packet.length>8) continue;
 			TxHeader.StdId = 0;
@@ -455,8 +515,10 @@ void can_write_from_stack() {
 			TxHeader.DLC = packet.length;
 			for(i=0;i<packet.length;++i) TxData[i] = packet.data[i];
 			HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox1);
+			// вернуться к началу цикла для проверки есть ли возможность отправить ещё один высокоприоритетный пакет
 			continue;
 		}
+		// если высокоприоритетных пакетов не осталось выполняется проверка стека низкоприоритетных пакетов (звука)
 		if(get_tx_can_packet(&can1_tx_stack,&packet)) {
 			if(packet.length>8) continue;
 			TxHeader.StdId = 0;
@@ -467,8 +529,11 @@ void can_write_from_stack() {
 			TxHeader.DLC = packet.length;
 			for(i=0;i<packet.length;++i) TxData[i] = packet.data[i];
 			HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox1);
-		}else break;
+		}else break; // пакетов нет выход из цикла
 	}
+
+
+	// такой же алгоритм для кан2
 	try=0;
 	while(HAL_CAN_GetTxMailboxesFreeLevel(&hcan2)!=0) {
 		try++;
@@ -530,23 +595,30 @@ static void initCANFilter() {
 	HAL_CAN_ConfigFilter(&hcan2, &sFilterConfig);
 }
 
-// разбивка кан буфера на пакеты
+// разбивка закодированного опусом буфера на кан пакеты
+// len - исходная длина пакета
+// ptr - указатель на входной буфер
 static void send_full_frame(uint8_t len, uint8_t *ptr) {
-	uint8_t i=len;
-	uint8_t cur_pckt = 1;
-	uint8_t pckt_cnt = 0;
+	uint8_t i=len;	// вспомогательная переменная
+	uint8_t cur_pckt = 1;	// номер текущего пакета
+	uint8_t pckt_cnt = 0;	// число необходимых пакетов
 	tx_stack_data packet;
 	id_field *p_id = (id_field*)(&packet.id);
 	if(len==0) return;
+
+	// вычисление числа требуемых кан пакетов
 	while(i) {
 		pckt_cnt++;
 		if(i<=8) {i=0;break;}
 		i-=8;
 	}
+
 	i=1;
 	while(cur_pckt<=pckt_cnt) {
+		// если нажата кнопка вызова значит в пакете закодирован сигнал вызова
 		if(button2) p_id->type = POINT_CALL;
 		else {
+			// point_flag определяет необходимо отправить звук всем точкам в сети или только компьютеру
 			if(point_flag==0) p_id->type = POINT_TO_ALL;
 			else p_id->type = POINT_TO_PC;
 		}
@@ -556,16 +628,20 @@ static void send_full_frame(uint8_t len, uint8_t *ptr) {
 		p_id->cmd = AUDIO_PACKET;
 		p_id->param = (cur_pckt&0x0F)|((pckt_cnt&0x0F)<<4);
 		packet.priority = LOW_PACKET_PRIORITY;
-		if(cur_pckt==pckt_cnt) { // last packet
+		if(cur_pckt==pckt_cnt) { // последний пакет
+			// длина данных от 1 до 8 байт
 			packet.length = len;
 			for(i=0;i<len;i++) packet.data[i] = ptr[(cur_pckt-1)*8+i];
+			// пакеты транслируются в оба кан1 и кан2
 			add_tx_can_packet(&can1_tx_stack,&packet);
 			add_tx_can_packet(&can2_tx_stack,&packet);
 			cur_pckt++;
 			len=0;
 		}else {
+			// фиксированная длина данных - 8 байт
 			packet.length = 8;
 			for(i=0;i<8;i++) packet.data[i] = ptr[(cur_pckt-1)*8+i];
+			// пакеты транслируются в оба кан1 и кан2
 			add_tx_can_packet(&can1_tx_stack,&packet);
 			add_tx_can_packet(&can2_tx_stack,&packet);
 			cur_pckt++;
@@ -574,32 +650,44 @@ static void send_full_frame(uint8_t len, uint8_t *ptr) {
 	}
 }
 
-static void can_work() {
-  if(encoded_micr_ready_buf_num) {
-	  if(encoded_length>0) {
-		  if(button1 || button2)
-		  {
-			  // отправка аудиоданных в сеть
-			  if(encoded_micr_ready_buf_num==1 || encoded_micr_ready_buf_num==2) {
-				  send_full_frame(encoded_length,(unsigned char*)&microphone_encoded_data[encoded_micr_ready_buf_num-1]);
-			  }
+// отправка закодированных аудиопакетов в кан сеть
 
-		  }
-		  encoded_length = 0;
-	  }
-	  encoded_micr_ready_buf_num=0;
-  }
+static void can_work() {
+	// если сформирован буфер закодированных опусом данных
+	if(encoded_micr_ready_buf_num) {
+		if(encoded_length>0) {
+			// если нажаты кнопка трансляции звука или вызова
+			if(button1 || button2)
+			{
+				// отправка аудиоданных в сеть
+				// проверка допустимых значений encoded_micr_ready_buf_num
+				if(encoded_micr_ready_buf_num==1 || encoded_micr_ready_buf_num==2) {
+					send_full_frame(encoded_length,(unsigned char*)&microphone_encoded_data[encoded_micr_ready_buf_num-1]);
+				}
+
+			}
+			encoded_length = 0;
+		}
+		encoded_micr_ready_buf_num=0;
+	}
 }
 
 // преобразование кан пакетов в звуковые
+
 static void decode_work() {
+	// буфер для хранения закодированного пакета при чтении из стека
 	static volatile uint8_t can_buf[CAN_BUF_SIZE];
-	int res = 0;
+	int res = 0;	// результат декодирования пакета опусом
 	uint16_t i = 0;
-	unsigned short can_length = 0;
+	unsigned short can_length = 0;	// длина пакета, считанного из стека
+
+	// на время трансляции звука в сеть входящие пакеты из стека не анализируются
 	if(button1) return;
 
+	// прочитать пакет из стека входящих кан пакетов
 	can_length = get_can_frame((uint8_t*)can_buf);
+
+	// если выполняется проверка связки микрофон - динамики необходимо выводить в динамик 2.5 кГц
 	if((test_2_5_kHz_state==1) || (test_2_5_kHz_state==2)) {
 		for(i=0;i<FRAME_SIZE;i++) {
 			audio_stream[i] = sin_ex[sin_offset++]+0x8000;
@@ -607,29 +695,25 @@ static void decode_work() {
 			add_audio_frame(audio_stream,FRAME_SIZE);
 		}
 	}else if(button2 || call_flag) {
+		// если нажата кнопка вызова или обнаружен входящий пакет с сигналом вызова
+		// в динамик посылается сигнал из буфера вызова
 		for(i=0;i<FRAME_SIZE;i++) {
 			audio_stream[i] = call_ex[call_offset2];
-			if(call_flag==0) audio_stream[i]*=0.1;
+			if(call_flag==0) audio_stream[i]*=0.1; // если нажата кнопка вызова громкость уменьшается в 10 раз
 			call_offset2++;
 			if(call_offset2>=sizeof(call_ex)/2) call_offset2 = 0;
 		}
-		//HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 		add_audio_frame(audio_stream,FRAME_SIZE);
-
 	}else if(can_length && can_length<CAN_BUF_SIZE) {
-		//HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
-		//__disable_irq();
+		// если из стека извлечён входящий кан пакет он декодируется опусом
 		res = opus_decode(dec,(unsigned char*)&can_buf[0],can_length,&audio_stream[0],1024,0);
-		//__enable_irq();
-		//HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_RESET);
-		//if(res!=FRAME_SIZE) {add_empty_audio_frame();}
-		//else {add_audio_frame(audio_stream,FRAME_SIZE);}
+		// результат декодирования отправляется в стек аудиопакетов для трансляции в динамик
 		if(res==FRAME_SIZE) add_audio_frame(audio_stream,FRAME_SIZE);
-		//HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 	}
 }
 
 // кодирование данных полученных от микрофона
+
 static void encode_work() {
 	uint16_t i = 0;
 	static int16_t tmp_frame[FRAME_SIZE];
@@ -756,7 +840,7 @@ int main(void)
   MX_CAN2_Init();
   MX_USART1_UART_Init();
   MX_ADC1_Init();
-  MX_IWDG_Init();
+  //MX_IWDG_Init();
   MX_RNG_Init();
   /* USER CODE BEGIN 2 */
 
@@ -821,7 +905,7 @@ int main(void)
 
   send_point_state(1);
 
-  //MX_IWDG_Init();
+  MX_IWDG_Init();
 
   while (1)
   {
@@ -911,7 +995,7 @@ int main(void)
 			  //pow_data[1] = (uint32_t)(((double)sum_adc[0]*33*43/10)/32+0.5)>>12;
 			  pow_data[0] = (double)sum_adc[1]*33*2.65/32/4096*1.02+0.5;
 			  pow_data[1] = (double)sum_adc[0]*33*4.3/32/4096*1.02+0.5;
-			  if((pow_data[1]<80)&&(pow_data[0]<70)) NVIC_SystemReset();
+			  //if((pow_data[1]<80)&&(pow_data[0]<70)) NVIC_SystemReset();
 			  sum_adc[0]=0;
 			  sum_adc[1]=0;
 		  }
