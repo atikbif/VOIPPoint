@@ -822,6 +822,7 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
+	uint8_t tmp_alarm = 0;
 	__enable_irq();
 	uint16_t i = 0;
 
@@ -943,10 +944,14 @@ int main(void)
 
   while (1)
   {
+	  tmp_alarm = 0;
 	  if(di1.en_flag) {
-		  if(di1.state==SHORT_CIRC || di1.state==LINE_BREAK || di1.state==OFF) alarm_flag=1;
-		  else alarm_flag=0;
-	  }else alarm_flag=0;
+		  if(di1.state==SHORT_CIRC || di1.state==LINE_BREAK || di1.state==OFF) tmp_alarm=1;
+	  }
+	  if(di2.en_flag) {
+		  if(di2.state==SHORT_CIRC || di2.state==LINE_BREAK || di2.state==OFF) tmp_alarm=1;
+	  }
+	  alarm_flag = tmp_alarm;
 	  //if((discrete_state & (1<<9)) || (discrete_state & (1<<10)) || ((discrete_state & (1<<8))==0)) alarm_flag=1;
 	  //else alarm_flag=0;
 	  // проверка микрофона динамиков по запросу
