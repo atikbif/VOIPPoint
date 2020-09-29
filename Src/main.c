@@ -432,10 +432,14 @@ static void check_can_rx(uint8_t can_num) {
 				}
 			}else if(p_id->cmd==GET_POINTS_STATE) {
 				// запрос шлюзом состо€ни€ точек
-				group_id = p_id ->group_addr;
-				send_point_state(1);
+				if(can_num==1)
+				{
+					group_id = p_id ->group_addr;
+					send_point_state(1);
+				}
 			}else if(p_id->cmd==GATE_STATE) {
-				if(can_num==1) {
+				if(can_num==1)
+				{
 					group_id = p_id ->group_addr;
 					// в состо€нии шлюза передаютс€ требуемые в точках состо€ни€ выходов
 					if(RxData[1]&(1<<3)) {discrete_state |= 0x4000;}else{discrete_state &= ~(0x4000);}
