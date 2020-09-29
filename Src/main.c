@@ -46,6 +46,7 @@
 #include "eeprom.h"
 #include "eeprom2.h"
 #include "flash_interface.h"
+#include "din.h"
 
 /* USER CODE END Includes */
 
@@ -251,7 +252,7 @@ uint16_t adc_tmr=0;				// таймер суммирования данных фильтром
 uint8_t prev_pow_data[2] = {0,0};	// для анализа изменения данных
 uint8_t pow_data[2] = {0,0};	// напряжение аккумулятора и питания 1 ед - 0.1В
 
-uint64_t gain = 0; // коэффициент ослабления громкости
+uint8_t gain = 0; // коэффициент ослабления громкости
 // 0 - максимальная громкость
 // 1 - ослабление в 2 раза
 // 2 - в 4 раза
@@ -259,6 +260,8 @@ uint64_t gain = 0; // коэффициент ослабления громкости
 
 // вспомогательный счётчик для управления вспышками светодиода
 uint16_t led_cnt = 0;
+
+extern struct dinput di1,di2;
 
 /* USER CODE END PV */
 
@@ -452,14 +455,38 @@ static void check_can_rx(uint8_t can_num) {
 			}
 			else if(p_id->point_addr == pos_in_group && p_id->group_addr == group_id && p_id->cmd==POINT_CONFIG) {
 				// команда записи в точку конфигурации
-				// RxData[0] - коэффициент ослабления звука
+				// RxData[0] - код команды
 				HAL_FLASH_Unlock();
-				if(RxData[0]>4) RxData[0]=0;
-				gain = RxData[0];
-				write_var2(RxData[0]);
-				// отправить состояние точки шлюзу для подтверждения
-				send_point_state(1);
-				send_point_state(1);
+				if(RxData[0]==0x01) {
+					// громкость точки
+					if(RxData[1]>4) RxData[1]=0;
+					gain = RxData[1];
+					uint64_t v2 = read_var2();
+					v2&=0xFFFFFFF8;// младшие 3 бита
+					v2|=RxData[1];
+					write_var2(v2);
+					// отправить состояние точки шлюзу для подтверждения
+					send_point_state(1);
+					send_point_state(1);
+				}else if(RxData[0]==0x02) {
+					// фильтр входов
+					di1.tmr_limit = RxData[1] & 0x0F;
+					if(di1.tmr_limit>10) di1.tmr_limit=10;
+					di2.tmr_limit = RxData[1] >> 4;
+					if(di2.tmr_limit>10) di2.tmr_limit=10;
+					di1.en_flag = RxData[2] & 0x01;
+					di2.en_flag = RxData[2] & 0x02;
+					uint64_t v2 = read_var2();
+					v2&=0xFFFFE007; // 10 бит после громкости
+					v2|=(((uint16_t)di1.tmr_limit)&0x0F)<<3;
+					v2|=(((uint16_t)di2.tmr_limit)&0x0F)<<7;
+					if(di1.en_flag) v2|=0x0001<<11;
+					if(di2.en_flag) v2|=0x0001<<12;
+					write_var2(v2);
+					send_point_state(1);
+					send_point_state(1);
+				}
+
 			}
 			// фильтр для недопуска сквозного прохождения пакетов от точек в своей группе
 			if(p_id->group_addr == group_id) {
@@ -795,6 +822,7 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
+	__enable_irq();
 	uint16_t i = 0;
 
   /* USER CODE END 1 */
@@ -822,10 +850,12 @@ int main(void)
   uint64_t cur_code = read_var();
   if(cur_code!=2) write_var(2);
   init_eeprom2();
-  gain = read_var2();
+  uint64_t v2 = read_var2();
+  gain = v2 & 0x07;
   if(gain>3) {
 	  gain=0;
-	  write_var2(0);
+	  v2&=0xFFFFFFF8;
+	  write_var2(v2);
   }
 
   /* USER CODE END SysInit */
@@ -843,6 +873,8 @@ int main(void)
   //MX_IWDG_Init();
   MX_RNG_Init();
   /* USER CODE BEGIN 2 */
+
+  init_dinputs(v2);
 
   LL_DMA_EnableIT_TC(DMA2, LL_DMA_CHANNEL_6);
   LL_DMA_EnableIT_TE(DMA2, LL_DMA_CHANNEL_6);
@@ -905,12 +937,18 @@ int main(void)
 
   send_point_state(1);
 
-  MX_IWDG_Init();
+  //MX_IWDG_Init();
+
+
 
   while (1)
   {
-	  if((discrete_state & (1<<9)) || (discrete_state & (1<<10)) || ((discrete_state & (1<<8))==0)) alarm_flag=1;
-	  else alarm_flag=0;
+	  if(di1.en_flag) {
+		  if(di1.state==SHORT_CIRC || di1.state==LINE_BREAK || di1.state==OFF) alarm_flag=1;
+		  else alarm_flag=0;
+	  }else alarm_flag=0;
+	  //if((discrete_state & (1<<9)) || (discrete_state & (1<<10)) || ((discrete_state & (1<<8))==0)) alarm_flag=1;
+	  //else alarm_flag=0;
 	  // проверка микрофона динамиков по запросу
 	  if(check_cmd && (test_2_5_kHz_state==0)) {
 		  test_2_5_kHz_state = 1;
@@ -989,13 +1027,9 @@ int main(void)
 		  adc_filter_tmr++;
 		  if(adc_filter_tmr>=32) {
 			  adc_filter_tmr=0;
-			  //pow_data[0] = (double)sum_adc[0]*33/1016/32+0.5;
-			  //pow_data[1] = (double)sum_adc[1]*33/1016/32+6.5;	// добавка 0.6 В для компенсации падения на стабилизаторе
-			  //pow_data[0] = (uint32_t)(((double)sum_adc[1]*33*53/20)/32+0.5)>>12;
-			  //pow_data[1] = (uint32_t)(((double)sum_adc[0]*33*43/10)/32+0.5)>>12;
-			  pow_data[0] = (double)sum_adc[1]*33*2.65/32/4096*1.02+0.5;
-			  pow_data[1] = (double)sum_adc[0]*33*4.3/32/4096*1.02+0.5;
-			  //if((pow_data[1]<80)&&(pow_data[0]<70)) NVIC_SystemReset();
+			  pow_data[0] = (double)sum_adc[1]*33*2.65/32/4096*1.01+0.5;	// аккумулятор
+			  pow_data[1] = (double)sum_adc[0]*33*4.3/32/4096+8+0.5;		// питание
+			  if((pow_data[1]<70)&&(pow_data[0]<70)) NVIC_SystemReset();
 			  sum_adc[0]=0;
 			  sum_adc[1]=0;
 		  }
@@ -1013,7 +1047,7 @@ int main(void)
 	  if(led_cnt<10) HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
 	  else HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_RESET);
 
-	  HAL_IWDG_Refresh(&hiwdg);
+	  //HAL_IWDG_Refresh(&hiwdg);
 	  // спящий режим
 	  //HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);
 	  //HAL_IWDG_Refresh(&hiwdg);

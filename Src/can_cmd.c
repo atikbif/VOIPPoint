@@ -8,6 +8,7 @@
 #include "can_cmd.h"
 #include "can_tx_stack.h"
 #include "main.h"
+#include "din.h"
 
 extern uint8_t group_id;			// номер группы/шлюза к которой принадлежит точка
 extern uint8_t pos_in_group;		// номер точки в цепочке шлюза
@@ -19,11 +20,17 @@ extern tx_stack can2_tx_stack;
 extern tx_stack can1_tx_stack_pr;
 extern tx_stack can2_tx_stack_pr;
 
+extern struct dinput di1,di2;
+
+extern uint8_t di2_type;
+
 extern uint16_t discrete_state;		// битовое состояние точки
 // младший байт:
 // бит 0 - результат проверки микрофона/динамиков
 // бит 1  - была ли проверка
 // бит 2 - состояние концевика
+// бит 3 - вход 1 аткивирова/запрещён
+// бит 4 - вход 2 активирован/запрещён
 //старший байт:
 // бит 0 - вход 1 замкнут
 // бит 1 - вход 1 обрыв
@@ -34,9 +41,11 @@ extern uint16_t discrete_state;		// битовое состояние точки
 // бит 6 - выход 1
 // бит 7 - выход 2
 
+uint8_t di_filters = 0;
+
 extern uint8_t pow_data[2]; // напряжение аккумулятора и питания 1 ед - 0.1В
 
-extern uint64_t gain; // коэффициент ослабления громкости
+extern uint8_t gain; // коэффициент ослабления громкости
 // 0 - максимальная громкость
 // 1 - тише в 2 раза
 // 2 - тише в 4 раза
@@ -54,13 +63,18 @@ void send_point_state(uint8_t can_num) {
 	p_id->cmd = POINT_STATE;
 	p_id->param = 0;
 	packet.priority = HIGH_PACKET_PRIORITY;	// приоритет оказывает влияние на ретрансляцию пакетов
-	packet.length = 6;
+	packet.length = 7;
+	if(di1.en_flag) discrete_state&=~(0x0008); else discrete_state |= 0x0008;
+	if(di2.en_flag) discrete_state&=~(0x0010); else discrete_state |= 0x0010;
+	if(di2_type & 0x01) discrete_state |= 0x0020; else discrete_state&=~(0x0020);
+	if(di2_type & 0x02) discrete_state |= 0x0040; else discrete_state&=~(0x0040);
 	packet.data[0] = discrete_state & 0xFF;
 	packet.data[1] = discrete_state >> 8;
 	packet.data[2] = pow_data[0];
 	packet.data[3] = pow_data[1];
 	packet.data[4] = 1;	// версия
 	packet.data[5] = gain;
+	packet.data[6] = (di1.tmr_limit&0x0F) | (di2.tmr_limit<<4);
 	if(can_num==1) add_tx_can_packet(&can1_tx_stack_pr,&packet);
 	else add_tx_can_packet(&can2_tx_stack_pr,&packet);
 }

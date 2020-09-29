@@ -26,6 +26,7 @@
 #include "uart.h"
 #include "can_cmd.h"
 #include "rng.h"
+#include "din.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -104,6 +105,8 @@ extern uint16_t call_tmr;			// таймер для определения прекращения внешнего вызов
 
 extern uint16_t adc_tmr;			// таймер для усреднения данных ацп
 extern uint16_t led_cnt;			// счётчик для подмигивания светодиодом
+
+extern struct dinput di1,di2;
 
 /* USER CODE END 0 */
 
@@ -360,11 +363,22 @@ void SysTick_Handler(void)
 		  tx1_buf[1]=0xAA;
 		  tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
 		  send_data_to_uart1(tx1_buf,3);
+		  break;
+	  case 8:// тип второго датчика
+		  tx1_buf[0]=0x9A;
+		  tx1_buf[1]=0xAA;
+		  tx1_buf[2]=tx1_buf[0] + tx1_buf[1];
+		  send_data_to_uart1(tx1_buf,3);
+		  break;
 	  default:
 		  break;
 	  }
 	  state++;
-	  if(state>=8) state=0;
+	  if(state>=10)  {
+		  if(di1.tmr<di1.tmr_limit && di1.state == ON) di1.tmr++;
+		  if(di2.tmr<di2.tmr_limit && di2.state == ON) di2.tmr++;
+		  state=0;
+	  }
   }
 
   if(rx1_cnt) {rx1_tmr++;}else rx1_tmr=0;
