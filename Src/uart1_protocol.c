@@ -51,18 +51,21 @@ void rx1_callback(uint8_t* rx_ptr,uint16_t rx_cnt) {
 					di1.state = LINE_BREAK;
 					di1.tmr = 0;
 				}else if(rx_ptr[1]==0x0C) {		// разомкнут
-					discrete_state &= ~(1<<8);
-					discrete_state &= ~(1<<9);
-					discrete_state &= ~(1<<10);
 					di1.state = OFF;
-					di1.tmr = 0;
-				}else if(rx_ptr[1]==0x30) {		// замкнут
-					di1.state = ON;
 					if(di1.tmr>=di1.tmr_limit) {
-						discrete_state |= 1<<8;
+						discrete_state &= ~(1<<8);
 						discrete_state &= ~(1<<9);
 						discrete_state &= ~(1<<10);
 					}
+
+				}else if(rx_ptr[1]==0x30) {		// замкнут
+					di1.state = ON;
+					//if(di1.tmr>=di1.tmr_limit) {
+					discrete_state |= 1<<8;
+					discrete_state &= ~(1<<9);
+					discrete_state &= ~(1<<10);
+					//}
+					di1.tmr = 0;
 				}else if(rx_ptr[1]==0xC0) {		// кз
 					discrete_state &= ~(1<<8);
 					discrete_state &= ~(1<<9);
@@ -87,20 +90,21 @@ void rx1_callback(uint8_t* rx_ptr,uint16_t rx_cnt) {
 					di2.state = LINE_BREAK;
 					di2.tmr = 0;
 				}else if(rx_ptr[1]==0x0C) {		// разомкнут
-					discrete_state &= ~(1<<11);
-					discrete_state &= ~(1<<12);
-					discrete_state &= ~(1<<13);
-					di2.state = OFF;
-					di2.tmr = 0;
+						di2.state = OFF;
+						if(di2.tmr>=di2.tmr_limit) {
+						discrete_state &= ~(1<<11);
+						discrete_state &= ~(1<<12);
+						discrete_state &= ~(1<<13);
+					}
 				}else if(rx_ptr[1]==0x30) {		// замкнут
 					di2.state = ON;
-					if(di2.tmr>=di2.tmr_limit) {
+					//if(di2.tmr>=di2.tmr_limit) {
 						discrete_state |= 1<<11;
 						discrete_state &= ~(1<<12);
 						discrete_state &= ~(1<<13);
 						di2.state = SHORT_CIRC;
 						di2.tmr = 0;
-					}
+					//}
 				}else if(rx_ptr[1]==0xC0) {		// кз
 					discrete_state &= ~(1<<11);
 					discrete_state &= ~(1<<12);

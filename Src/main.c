@@ -465,7 +465,9 @@ static void check_can_rx(uint8_t can_num) {
 					// громкость точки
 					if(RxData[1]>4) RxData[1]=0;
 					gain = RxData[1];
-					uint64_t v2 = read_var2();
+					uint8_t res = 0;
+					uint64_t v2 = read_var2(&res);
+					if(res==0) v2=0;
 					v2&=0xFFFFFFF8;// младшие 3 бита
 					v2|=RxData[1];
 					write_var2(v2);
@@ -480,7 +482,9 @@ static void check_can_rx(uint8_t can_num) {
 					if(di2.tmr_limit>10) di2.tmr_limit=10;
 					di1.en_flag = RxData[2] & 0x01;
 					di2.en_flag = RxData[2] & 0x02;
-					uint64_t v2 = read_var2();
+					uint8_t res = 0;
+					uint64_t v2 = read_var2(&res);
+					if(res==0) v2=0;
 					v2&=0xFFFFE007; // 10 бит после громкости
 					v2|=(((uint16_t)di1.tmr_limit)&0x0F)<<3;
 					v2|=(((uint16_t)di2.tmr_limit)&0x0F)<<7;
@@ -827,7 +831,6 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
 	uint8_t tmp_alarm = 0;
-	__enable_irq();
 	uint16_t i = 0;
 
   /* USER CODE END 1 */
@@ -847,21 +850,37 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
 
-  HAL_Delay(50);	// задержка на стабилизацию питания
+  //HAL_Delay(50);	// задержка на стабилизацию питания
   HAL_FLASH_Unlock();
   __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_OPTVERR);
 
   init_eeprom();
+  HAL_Delay(50);
+  init_eeprom2();
   uint64_t cur_code = read_var();
   if(cur_code!=2) write_var(2);
-  init_eeprom2();
-  uint64_t v2 = read_var2();
+
+  uint8_t success_flag = 0;
+  uint64_t v2 = read_var2(&success_flag);
+  if(success_flag==0) {
+	  v2 = 0;
+	  write_var2(v2);
+  }
   gain = v2 & 0x07;
   if(gain>3) {
 	  gain=0;
 	  v2&=0xFFFFFFF8;
+	  v2|=gain&0x07;
 	  write_var2(v2);
   }
+
+//  тест записи flash при каждом включении
+//  gain++;
+//  if(gain==4) gain=0;
+//  v2&=0xFFFFFFF8;
+//  v2|=gain&0x07;
+//  write_var2(v2);
+
 
   /* USER CODE END SysInit */
 

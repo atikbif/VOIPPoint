@@ -375,8 +375,8 @@ void SysTick_Handler(void)
 	  }
 	  state++;
 	  if(state>=10)  {
-		  if(di1.tmr<di1.tmr_limit && di1.state == ON) di1.tmr++;
-		  if(di2.tmr<di2.tmr_limit && di2.state == ON) di2.tmr++;
+		  if(di1.tmr<di1.tmr_limit && di1.state == OFF) di1.tmr++;
+		  if(di2.tmr<di2.tmr_limit && di2.state == OFF) di2.tmr++;
 		  state=0;
 	  }
   }

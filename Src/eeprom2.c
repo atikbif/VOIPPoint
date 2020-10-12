@@ -75,10 +75,11 @@ uint8_t  init_eeprom2() {
 	return 1;
 }
 
-uint64_t read_var2() {
+uint64_t read_var2(uint8_t *success_flag) {
 	uint8_t res = 0;
 	uint16_t addr=0;
 	res=find_last_written_var_addr(&addr);
+	*success_flag = res;
 	if(res) {
 		return *(__IO uint64_t *)(EEPROM2_START_ADDR+addr);
 	}
@@ -87,8 +88,9 @@ uint64_t read_var2() {
 
 void write_var2(uint64_t value) {
 	uint16_t addr=0;
-	find_last_written_var_addr(&addr);
-	if(addr == EEPROM2_PAGE_SIZE-16) { // страница заполнена
+	HAL_FLASH_Unlock();
+	if(find_last_written_var_addr(&addr)==0) addr=0;
+	if(addr >= EEPROM2_PAGE_SIZE-16) { // страница заполнена
 		// erase page
 		EraseInitStruct.TypeErase   = FLASH_TYPEERASE_PAGES;
 		EraseInitStruct.Banks       = GetBank(EEPROM2_START_ADDR);
