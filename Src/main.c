@@ -856,6 +856,7 @@ int main(void)
 
   init_eeprom();
   HAL_Delay(50);
+
   init_eeprom2();
   uint64_t cur_code = read_var();
   if(cur_code!=2) write_var(2);
@@ -1075,9 +1076,10 @@ int main(void)
 	  if(led_cnt<10) HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
 	  else HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_RESET);
 
+
 	  //HAL_IWDG_Refresh(&hiwdg);
 	  // спящий режим
-	  //HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);
+	  HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI); // PWR_LOWPOWERREGULATOR_ON  PWR_MAINREGULATOR_ON
 	  //HAL_IWDG_Refresh(&hiwdg);
 
     /* USER CODE END WHILE */

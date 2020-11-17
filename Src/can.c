@@ -32,7 +32,7 @@ void MX_CAN1_Init(void)
 {
 
   hcan1.Instance = CAN1;
-  hcan1.Init.Prescaler = 10;
+  hcan1.Init.Prescaler = 20;//10;
   hcan1.Init.Mode = CAN_MODE_NORMAL;
   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
   hcan1.Init.TimeSeg1 = CAN_BS1_13TQ;
@@ -54,7 +54,7 @@ void MX_CAN2_Init(void)
 {
 
   hcan2.Instance = CAN2;
-  hcan2.Init.Prescaler = 10;
+  hcan2.Init.Prescaler = 20;//10;
   hcan2.Init.Mode = CAN_MODE_NORMAL;
   hcan2.Init.SyncJumpWidth = CAN_SJW_1TQ;
   hcan2.Init.TimeSeg1 = CAN_BS1_13TQ;
